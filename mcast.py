@@ -5,41 +5,12 @@ import time
 import typing
 import platform
 import json
-
-# RULES :
-#   For Sending: EOL (/0)  at end means that there is yet to come more data (>1024)
-#                       (use this if cant send data in single stream)
-#                EOF (/1) at end means that full data is send and start processing it (<=1024)
-#                       (use this for single sendto command)
-port = 61235
-ipv4_grp = '225.0.0.250'
-ipv6_grp = 'ff15:7079:7468:6f6e:6465:6d6f:6d63:6173'
-ttl = 1  # Increase to reach other networks
-listener_buffer = 1024
-EOF = b'\1'
-EOL = b'\0'
-packet_encoding = 'UTF8'  # should be same for all
-packet_resend_after = 1  # in seconds
+from abstract import *
 
 
-class Connection:
-    def __init__(self, device_name, tcpIP, tcpPort, nickname):
-        self.deviceName = device_name
-        self.tcpIP = tcpIP
-        self.tcpPort = tcpPort
-        self.nickname = nickname
-
-    @property
-    def name(self):
-        pass
-
-    @name.getter
-    def name(self):
-        return self.nickname if self.nickname else self.deviceName
-
-
-class LanConnection:
+class LanConnection(AbstractConnections):
     def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
+        super().__init__()
         self.ipType = ip
         self.myself = {
             'type': 'MySelf',
@@ -48,49 +19,49 @@ class LanConnection:
             'tcpPort': None,
             'nickname': None,
         }
-        self.serialized_myself = json.dumps(self.myself, allow_nan=True).encode(packet_encoding)
-        self.active_connection = {}
-        self.listener_thread = threading.Thread(target=self.listen)
+        self.udp.serialized_myself = json.dumps(self.myself, allow_nan=True).encode(packet_encoding)
+        self.udp.active_connection = {}
+        self.udp.listener_thread = threading.Thread(target=self.listen)
 
     def run(self):
         self.setup_socket(self.ipType)
-        self.listener_thread.start()
+        self.udp.listener_thread.start()
         self.ping()
 
     def setup_socket(self, ip):
-        self.addr_info = socket.getaddrinfo(ipv6_grp if ip == 'ipv6' else ipv4_grp, None)[0]
+        self.udp.addr_info = socket.getaddrinfo(ipv6_grp if ip == 'ipv6' else ipv4_grp, None)[0]
 
-        self.conn = socket.socket(self.addr_info[0], socket.SOCK_DGRAM)
-        self.listener_conn = socket.socket(self.addr_info[0], socket.SOCK_DGRAM)
+        self.udp.conn = socket.socket(self.udp.addr_info[0], socket.SOCK_DGRAM)
+        self.udp.listener_conn = socket.socket(self.udp.addr_info[0], socket.SOCK_DGRAM)
 
         # Set Time-to-live (optional)
         ttl_bin = struct.pack('@i', ttl)
 
         # Allow multiple copies of this program on one machine
         # (not strictly needed)
-        self.listener_conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.udp.listener_conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        self.listener_conn.bind(('', port))  # accept all ping at local host
-        group_bin = socket.inet_pton(self.addr_info[0], self.addr_info[4][0])
+        self.udp.listener_conn.bind(('', port))  # accept all ping at local host
+        group_bin = socket.inet_pton(self.udp.addr_info[0], self.udp.addr_info[4][0])
 
         # if self.addr_info[0] == socket.AF_INET:  # IPv4
         if ip == 'ipv4':
             mreq = group_bin + struct.pack('=I', socket.INADDR_ANY)
-            self.listener_conn.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            self.udp.listener_conn.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-            self.conn.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl_bin)
+            self.udp.conn.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl_bin)
         else:
             mreq = group_bin + struct.pack('@I', 0)
-            self.listener_conn.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mreq)
+            self.udp.listener_conn.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mreq)
 
-            self.conn.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, ttl_bin)
+            self.udp.conn.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, ttl_bin)
 
     def listen(self):
         """ listen for messages """
         data_per_ip = {}
         reset = 0
         while True:
-            data, sender = self.listener_conn.recvfrom(listener_buffer)
+            data, sender = self.udp.listener_conn.recvfrom(listener_buffer)
 
             while data[-1:] == EOL:
                 reset = 3
@@ -101,7 +72,7 @@ class LanConnection:
                 data = data[:-1]
 
             if reset == 3:
-                data_per_ip[sender] = data_per_ip[sender]+data if data_per_ip.get(sender, 0) else data
+                data_per_ip[sender] = data_per_ip[sender] + data if data_per_ip.get(sender, 0) else data
                 reset = 0
 
             if reset == 1:
@@ -120,10 +91,10 @@ class LanConnection:
                 (not data.get('tcpPort', None)) or \
                 data == self.myself:
             return
-        self.active_connection[Connection(device_name=data['device_name'],
-                                          nickname=data['nickname'],
-                                          tcpPort=data['tcpPort'],
-                                          tcpIP=data['tcpIP'])] = True
+        self.udp.active_connection[Connection(device_name=data['device_name'],
+                                              nickname=data['nickname'],
+                                              tcpPort=data['tcpPort'],
+                                              tcpIP=data['tcpIP'])] = True
 
     @staticmethod
     def except_hook(e: Exception):
@@ -131,7 +102,7 @@ class LanConnection:
 
     def ping(self):
         while True:
-            self.conn.sendto(self.serialized_myself+EOF, (self.addr_info[4][0], port))
+            self.udp.conn.sendto(self.udp.serialized_myself + EOF, (self.udp.addr_info[4][0], port))
             time.sleep(packet_resend_after)
 
 

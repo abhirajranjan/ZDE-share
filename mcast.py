@@ -18,7 +18,8 @@ ttl = 1  # Increase to reach other networks
 listener_buffer = 1024
 EOF = b'\1'
 EOL = b'\0'
-packet_encoding = 'UTF8'
+packet_encoding = 'UTF8'  # should be same for all
+packet_resend_after = 1  # in seconds
 
 
 class Connection:
@@ -131,7 +132,7 @@ class LanConnection:
     def ping(self):
         while True:
             self.conn.sendto(self.serialized_myself+EOF, (self.addr_info[4][0], port))
-            time.sleep(1)
+            time.sleep(packet_resend_after)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 import struct
 import socket
 import threading
+import time
 import typing
-import pickle
 import platform
 import json
 
@@ -18,18 +18,20 @@ ttl = 1  # Increase to reach other networks
 listener_buffer = 1024
 EOF = b'\1'
 EOL = b'\0'
+packet_encoding = 'UTF8'
 
 
 class LanConnection:
     def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
         self.setup_socket(ip)
         self.myself = {
+            'type': 'MySelf',
             'deviceName': platform.node(),
             'tcpIP': None,
             'tcpPort': None,
             'nickname': None,
         }
-        self.serialized_myself = json.dumps(self.myself, allow_nan=True).encode('utf8')
+        self.serialized_myself = json.dumps(self.myself, allow_nan=True).encode(packet_encoding)
         self.active_connection = {}
         self.listener_thread = threading.Thread(target=self.listen)
 
@@ -85,28 +87,25 @@ class LanConnection:
                 reset = 0
 
             if reset == 1:
-                decoded_data = pickle.loads(data_per_ip[sender])
-                if decoded_data.name == 'MySelf':
+                decoded_data = json.loads(data_per_ip[sender].decode(packet_encoding))
+                if decoded_data['type', None] == 'MySelf':
                     self.handle_active_connections(decoded_data)
 
                 del data_per_ip[sender]
                 reset = 0
 
-    def handle_active_connections(self, data: object):
-        if data.tcpIP == self.tcpIP:
+    def handle_active_connections(self, data: dict):
+        if data.get['tcpIP'] == self.myself['tcpIP']:
             return
-
 
     @staticmethod
     def except_hook(e: Exception):
         print(e)
 
     def test_sender(self):
-        for i in range(3):
-            data = 'hello world !, my name is Abhiraj Ranjan\n'
-            print('sending ' + data)
-            self.conn.sendto(pickle.dumps(data)+EOL, (self.addr_info[4][0], port))
-        self.conn.sendto(pickle.dumps(repr(time.time()))+EOF, (self.addr_info[4][0], port))
+        while True:
+            self.conn.sendto(self.serialized_myself+EOF, (self.addr_info[4][0], port))
+            time.sleep(1)
 
 
 if __name__ == '__main__':

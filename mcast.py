@@ -39,7 +39,7 @@ class Connection:
 
 class LanConnection:
     def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
-        self.setup_socket(ip)
+        self.ipType = ip
         self.myself = {
             'type': 'MySelf',
             'deviceName': platform.node(),
@@ -52,8 +52,9 @@ class LanConnection:
         self.listener_thread = threading.Thread(target=self.listen)
 
     def run(self):
+        self.setup_socket(self.ipType)
         self.listener_thread.start()
-        self.test_sender()
+        self.ping()
 
     def setup_socket(self, ip):
         self.addr_info = socket.getaddrinfo(ipv6_grp if ip == 'ipv6' else ipv4_grp, None)[0]
@@ -103,11 +104,14 @@ class LanConnection:
                 reset = 0
 
             if reset == 1:
-                decoded_data = json.loads(data_per_ip[sender].decode(packet_encoding))
-                if decoded_data['type', None] == 'MySelf':
-                    self.handle_active_connections(decoded_data)
-
-                del data_per_ip[sender]
+                if sender in data_per_ip:
+                    decoded_data = json.loads(data_per_ip[sender].decode(packet_encoding))
+                    del data_per_ip[sender]
+                else:
+                    decoded_data = json.loads(data.decode(packet_encoding))
+                # if decoded_data['type', None] == 'MySelf':
+                #     self.handle_active_connections(decoded_data)
+                print(decoded_data)
                 reset = 0
 
     def handle_active_connections(self, data: dict['tcpIP', 'tcpPort', 'device_name', 'nickname']):
@@ -124,7 +128,7 @@ class LanConnection:
     def except_hook(e: Exception):
         print(e)
 
-    def test_sender(self):
+    def ping(self):
         while True:
             self.conn.sendto(self.serialized_myself+EOF, (self.addr_info[4][0], port))
             time.sleep(1)

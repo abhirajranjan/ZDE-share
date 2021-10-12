@@ -13,4 +13,4 @@ import typing
 class NetworkManager(mcast.LanConnection):
     def __init__(self,  ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
         super().__init__(ip)
-
+        self.setup_socket()

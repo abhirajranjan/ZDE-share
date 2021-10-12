@@ -22,10 +22,10 @@ EOL = b'\0'
 class LanConnection:
     def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
         self.setup_socket(ip)
-
         self.listener_thread = threading.Thread(target=self.listen)
-        self.listener_thread.start()
 
+    def run(self):
+        self.listener_thread.start()
         self.test_sender()
 
     def setup_socket(self, ip):

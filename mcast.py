@@ -21,12 +21,14 @@ class LanConnection(AbstractConnections):
         }
         self.udp.serialized_myself = json.dumps(self.myself, allow_nan=True).encode(packet_encoding)
         self.udp.active_connection = {}
+
         self.udp.listener_thread = threading.Thread(target=self.listen)
+        self.udp.sender_thread = threading.Thread(target=self.ping)
 
     def run(self):
         self.setup_socket(self.ipType)
         self.udp.listener_thread.start()
-        self.ping()
+        self.udp.sender_thread.start()
 
     def setup_socket(self, ip):
         self.udp.addr_info = socket.getaddrinfo(ipv6_grp if ip == 'ipv6' else ipv4_grp, None)[0]

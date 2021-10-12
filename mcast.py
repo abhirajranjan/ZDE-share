@@ -21,6 +21,22 @@ EOL = b'\0'
 packet_encoding = 'UTF8'
 
 
+class Connection:
+    def __init__(self, device_name, tcpIP, tcpPort, nickname):
+        self.deviceName = device_name
+        self.tcpIP = tcpIP
+        self.tcpPort = tcpPort
+        self.nickname = nickname
+
+    @property
+    def name(self):
+        pass
+
+    @name.getter
+    def name(self):
+        return self.nickname if self.nickname else self.deviceName
+
+
 class LanConnection:
     def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
         self.setup_socket(ip)
@@ -94,9 +110,15 @@ class LanConnection:
                 del data_per_ip[sender]
                 reset = 0
 
-    def handle_active_connections(self, data: dict):
-        if data.get['tcpIP'] == self.myself['tcpIP']:
+    def handle_active_connections(self, data: dict['tcpIP', 'tcpPort', 'device_name', 'nickname']):
+        if (not data.get('tcpIP', None)) or \
+                (not data.get('tcpPort', None)) or \
+                data == self.myself:
             return
+        self.active_connection[Connection(device_name=data['device_name'],
+                                          nickname=data['nickname'],
+                                          tcpPort=data['tcpPort'],
+                                          tcpIP=data['tcpIP'])] = True
 
     @staticmethod
     def except_hook(e: Exception):

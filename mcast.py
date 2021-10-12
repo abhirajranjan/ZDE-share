@@ -1,10 +1,11 @@
-import pickle
-import time
 import struct
 import socket
 import threading
 import typing
 import pickle
+import platform
+import json
+
 # RULES :
 #   For Sending: EOL (/0)  at end means that there is yet to come more data (>1024)
 #                       (use this if cant send data in single stream)
@@ -22,6 +23,14 @@ EOL = b'\0'
 class LanConnection:
     def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
         self.setup_socket(ip)
+        self.myself = {
+            'deviceName': platform.node(),
+            'tcpIP': None,
+            'tcpPort': None,
+            'nickname': None,
+        }
+        self.serialized_myself = json.dumps(self.myself, allow_nan=True).encode('utf8')
+        self.active_connection = {}
         self.listener_thread = threading.Thread(target=self.listen)
 
     def run(self):
@@ -76,9 +85,17 @@ class LanConnection:
                 reset = 0
 
             if reset == 1:
-                print(str(sender) + '  ' + pickle.loads(data_per_ip[sender]))
+                decoded_data = pickle.loads(data_per_ip[sender])
+                if decoded_data.name == 'MySelf':
+                    self.handle_active_connections(decoded_data)
+
                 del data_per_ip[sender]
                 reset = 0
+
+    def handle_active_connections(self, data: object):
+        if data.tcpIP == self.tcpIP:
+            return
+
 
     @staticmethod
     def except_hook(e: Exception):
@@ -94,3 +111,4 @@ class LanConnection:
 
 if __name__ == '__main__':
     connection = LanConnection()
+    connection.run()

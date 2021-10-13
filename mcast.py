@@ -32,6 +32,9 @@ class LanConnection(AbstractConnections):
 
     def run(self):
         self.setup_socket(self.ipType)
+        self.start_threads()
+
+    def start_threads(self):
         self.udp.listener_thread.start()
         self.udp.sender_thread.start()
 
@@ -80,9 +83,8 @@ class LanConnection(AbstractConnections):
                     del data_per_ip[sender]
                 else:
                     decoded_data = json.loads(data.decode(packet_encoding))
-                if decoded_data['type', None] == 'MySelf':
+                if decoded_data.get('type', None) == 'MySelf':
                     self.handle_active_connections(decoded_data)
-                print(decoded_data)
 
     def handle_active_connections(self, data: dict['tcpIP', 'tcpPort', 'device_name', 'nickname']):
         # checks if there is a fault in tcpIP server:port (as None or invalid) and also if we receive our own message
@@ -94,6 +96,8 @@ class LanConnection(AbstractConnections):
                                               nickname=data['nickname'],
                                               tcpPort=data['tcpPort'],
                                               tcpIP=data['tcpIP'])] = True
+
+        print(data)
 
     @staticmethod
     def except_hook(e: Exception):

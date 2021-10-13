@@ -15,15 +15,20 @@ class LanConnection(AbstractConnections):
         self.myself = {
             'type': 'MySelf',
             'deviceName': platform.node(),
-            'tcpIP': None,
-            'tcpPort': None,
+            'tcpIP_listener': None,
+            'tcpPort_listener': None,
+            'tcpIP_sender': None,
+            'tcpPort_sender': None,
             'nickname': None,
         }
-        self.udp.serialized_myself = json.dumps(self.myself, allow_nan=True).encode(packet_encoding)
+        self.generate_myself()
         self.udp.active_connection = {}
 
         self.udp.listener_thread = threading.Thread(target=self.listen)
         self.udp.sender_thread = threading.Thread(target=self.ping)
+
+    def generate_myself(self):
+        self.udp.serialized_myself = json.dumps(self.myself, allow_nan=True).encode(packet_encoding)
 
     def run(self):
         self.setup_socket(self.ipType)
@@ -61,37 +66,29 @@ class LanConnection(AbstractConnections):
     def listen(self):
         """ listen for messages """
         data_per_ip = {}
-        reset = 0
         while True:
             data, sender = self.udp.listener_conn.recvfrom(listener_buffer)
 
-            while data[-1:] == EOL:
-                reset = 3
-                data = data[:-1]  # Strip trailing \0's
-
-            while data[-1:] == EOF:
-                reset = 1
-                data = data[:-1]
-
-            if reset == 3:
+            if (a := data.find(EOL)) != -1:
+                data = data[:a]
                 data_per_ip[sender] = data_per_ip[sender] + data if data_per_ip.get(sender, 0) else data
-                reset = 0
 
-            if reset == 1:
+            if (a := data.find(EOF)) != -1:
+                data = data[:a]
                 if sender in data_per_ip:
                     decoded_data = json.loads(data_per_ip[sender].decode(packet_encoding))
                     del data_per_ip[sender]
                 else:
                     decoded_data = json.loads(data.decode(packet_encoding))
-                # if decoded_data['type', None] == 'MySelf':
-                #     self.handle_active_connections(decoded_data)
+                if decoded_data['type', None] == 'MySelf':
+                    self.handle_active_connections(decoded_data)
                 print(decoded_data)
-                reset = 0
 
     def handle_active_connections(self, data: dict['tcpIP', 'tcpPort', 'device_name', 'nickname']):
-        if (not data.get('tcpIP', None)) or \
-                (not data.get('tcpPort', None)) or \
-                data == self.myself:
+        # checks if there is a fault in tcpIP server:port (as None or invalid) and also if we receive our own message
+        if (not data.get('tcpIP_server', None)) or \
+                (not data.get('tcpPort_server', None)) or \
+                (data == self.myself):
             return
         self.udp.active_connection[Connection(device_name=data['device_name'],
                                               nickname=data['nickname'],

@@ -6,6 +6,7 @@ import typing
 import platform
 import json
 from abstract import *
+import os
 
 
 class LanConnection(AbstractConnections):
@@ -15,6 +16,7 @@ class LanConnection(AbstractConnections):
         self.myself = {
             'type': 'MySelf',
             'deviceName': platform.node(),
+            'OS': os.name,
             'tcpIP_listener': None,
             'tcpPort_listener': None,
             'tcpIP_sender': None,
@@ -83,6 +85,9 @@ class LanConnection(AbstractConnections):
                     del data_per_ip[sender]
                 else:
                     decoded_data = json.loads(data.decode(packet_encoding))
+
+                decoded_data['tcpIP_listener'] = sender[0]
+                decoded_data['tcpIP_sender'] = sender[0]
                 if decoded_data.get('type', None) == 'MySelf':
                     self.handle_active_connections(decoded_data)
 

@@ -1,9 +1,7 @@
-import socket
-
-
 # RULES :
 #   For Sending: EOL (/0)  at end means that there is yet to come more data (>1024)
 #                       (use this if cant send data in single stream)
+#
 #                EOF (/1) at end means that full data is send and start processing it (<=1024)
 #                       (use this for single sendto command)
 port = 61235
@@ -19,7 +17,7 @@ device_to_connect_at_one_time = 20
 
 
 class Connection:
-    def __init__(self, device_name, tcpIP, tcpPort, nickname):
+    def __init__(self, device_name: str, tcpIP: str, tcpPort: int, nickname: str):
         self.deviceName = device_name
         self.tcpIP = tcpIP
         self.tcpPort = tcpPort

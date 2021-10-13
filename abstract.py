@@ -15,6 +15,7 @@ EOF = b'\1'
 EOL = b'\0'
 packet_encoding = 'UTF8'  # should be same for all
 packet_resend_after = 1  # in seconds
+device_to_connect_at_one_time = 20
 
 
 class Connection:

@@ -48,6 +48,7 @@ class NetworkManager(mcast.LanConnection):
         self.tcp.tcp_listener_process.start()
 
     def run(self):
+        self.reset_ip()
         self.start_threads()
 
     def handle_client(self, conn, addr):

@@ -23,7 +23,6 @@ class LanConnection(AbstractConnections):
             'tcpPort_sender': None,
             'nickname': None,
         }
-        self.generate_myself()
         self.udp.active_connection = {}
 
         self.udp.listener_thread = threading.Thread(target=self.listen)
@@ -34,7 +33,13 @@ class LanConnection(AbstractConnections):
 
     def run(self):
         self.setup_socket(self.ipType)
+        self.reset_ip()
         self.start_threads()
+
+    def reset_ip(self):
+        self.myself['tcpIP_listener'] = self.udp.listener_conn.getsockname()[0]
+        self.myself['tcpIP_sender'] = self.udp.listener_conn.getsockname()[0]
+        self.generate_myself()
 
     def start_threads(self):
         self.udp.listener_thread.start()
@@ -86,21 +91,19 @@ class LanConnection(AbstractConnections):
                 else:
                     decoded_data = json.loads(data.decode(packet_encoding))
 
-                decoded_data['tcpIP_listener'] = sender[0]
-                decoded_data['tcpIP_sender'] = sender[0]
                 if decoded_data.get('type', None) == 'MySelf':
                     self.handle_active_connections(decoded_data)
 
     def handle_active_connections(self, data: dict['tcpIP', 'tcpPort', 'device_name', 'nickname']):
         # checks if there is a fault in tcpIP server:port (as None or invalid) and also if we receive our own message
-        if (not data.get('tcpIP_server', None)) or \
-                (not data.get('tcpPort_server', None)) or \
+        if (not data.get('tcpIP_listener', None)) or \
+                (not data.get('tcpPort_listener', None)) or \
                 (data == self.myself):
             return
-        self.udp.active_connection[Connection(device_name=data['device_name'],
+        self.udp.active_connection[Connection(device_name=data['deviceName'],
                                               nickname=data['nickname'],
-                                              tcpPort=data['tcpPort'],
-                                              tcpIP=data['tcpIP'])] = True
+                                              tcpPort=data['tcpPort_listener'],
+                                              tcpIP=data['tcpIP_listener'])] = True
 
         print(data)
 

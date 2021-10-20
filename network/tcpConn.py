@@ -15,11 +15,11 @@ import json
 
 
 class NetworkManager(mcast.LanConnection):
-    def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
+    def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
         super().__init__(ip)
         self.setup_socket(ip)
 
-    def setup_socket(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
+    def setup_socket(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
         super().setup_socket(ip)
         self.tcp.tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp.tcp_sender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

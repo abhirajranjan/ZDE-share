@@ -10,7 +10,7 @@ import os
 
 
 class LanConnection(AbstractConnections):
-    def __init__(self, ip: typing.Union['ipv4', 'ipv6'] = 'ipv4'):
+    def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
         super().__init__()
         self.ipType = ip
         self.myself = {
@@ -94,7 +94,9 @@ class LanConnection(AbstractConnections):
                 if decoded_data.get('type', None) == 'MySelf':
                     self.handle_active_connections(decoded_data)
 
-    def handle_active_connections(self, data: dict['tcpIP', 'tcpPort', 'device_name', 'nickname']):
+    def handle_active_connections(self, data: dict[str('tcpIP'), str('tcpPort'),
+                                                    str('device_name'), str('nickname')]):
+
         # checks if there is a fault in tcpIP server:port (as None or invalid) and also if we receive our own message
         if (not data.get('tcpIP_listener', None)) or \
                 (not data.get('tcpPort_listener', None)) or \
@@ -115,8 +117,3 @@ class LanConnection(AbstractConnections):
         while True:
             self.udp.conn.sendto(self.udp.serialized_myself + EOF, (self.udp.addr_info[4][0], port))
             time.sleep(packet_resend_after)
-
-
-if __name__ == '__main__':
-    connection = LanConnection()
-    connection.run()

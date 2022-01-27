@@ -57,19 +57,24 @@ class NetworkManager(LanConnection):
     def handle_client(self, conn, addr):
         data_send_prev = b''
         while True:
-            data = conn.recv(listener_buffer)
+            try:
+                data = conn.recv(listener_buffer)
 
-            if (a := data.find(EOL)) != -1:
-                data = data[:a]
-                data_send_prev += data
+                if (a := data.find(EOL)) != -1:
+                    data = data[:a]
+                    data_send_prev += data
 
-            elif (a := data.find(EOF)) != -1:
-                data = data[:a]
-                if data_send_prev:
-                    decoded_data = json.loads(data_send_prev.decode(packet_encoding))
-                else:
-                    decoded_data = json.loads(data.decode(packet_encoding))
-                self.process_data(decoded_data, addr, conn)
+                elif (a := data.find(EOF)) != -1:
+                    data = data[:a]
+                    if data_send_prev:
+                        decoded_data = json.loads(data_send_prev.decode(packet_encoding))
+                    else:
+                        decoded_data = json.loads(data.decode(packet_encoding))
+                    self.process_data(decoded_data, addr, conn)
+            except Exception as e:
+                if self.debug:
+                    self.except_hook(e)
+                data_send_prev = b''
 
     def process_data(self, data: dict, addr, conn: socket.socket):
         # 1v1 connection

@@ -83,22 +83,27 @@ class LanConnection(AbstractConnections):
         """ listen for messages """
         data_per_ip = {}
         while True:
-            data, sender = self.udp.listener_conn.recvfrom(listener_buffer)
+            try:
+                data, sender = self.udp.listener_conn.recvfrom(listener_buffer)
 
-            if (a := data.find(EOL)) != -1:
-                data = data[:a]
-                data_per_ip[sender] = data_per_ip[sender] + data if data_per_ip.get(sender, 0) else data
+                if (a := data.find(EOL)) != -1:
+                    data = data[:a]
+                    data_per_ip[sender] = data_per_ip[sender] + data if data_per_ip.get(sender, 0) else data
 
-            if (a := data.find(EOF)) != -1:
-                data = data[:a]
-                if sender in data_per_ip:
-                    decoded_data = json.loads(data_per_ip[sender].decode(packet_encoding))
-                    del data_per_ip[sender]
-                else:
-                    decoded_data = json.loads(data.decode(packet_encoding))
+                if (a := data.find(EOF)) != -1:
+                    data = data[:a]
+                    if sender in data_per_ip:
+                        decoded_data = json.loads(data_per_ip[sender].decode(packet_encoding))
+                        del data_per_ip[sender]
+                    else:
+                        decoded_data = json.loads(data.decode(packet_encoding))
 
-                if decoded_data.get('type', None) == 'MySelf':
-                    self.handle_active_connections(decoded_data)
+                    if decoded_data.get('type', None) == 'MySelf':
+                        self.handle_active_connections(decoded_data)
+            except Exception as e:
+                if self.debug:
+                    self.except_hook(e)
+                data_per_ip = {}
 
     def handle_active_connections(self, data: dict[str('tcpIP'), str('tcpPort'),
                                                     str('device_name'), str('nickname')]):
@@ -120,9 +125,14 @@ class LanConnection(AbstractConnections):
 
     @staticmethod
     def except_hook(e: Exception):
-        print(e)
+        print(f'{type(e).__name__}: [Error {e.args[0]}] {e.args[1]}')
 
     def ping(self):
         while True:
-            self.udp.conn.sendto(self.udp.serialized_myself + EOF, (self.udp.addr_info[4][0], port))
-            time.sleep(packet_resend_after)
+            try:
+                self.udp.conn.sendto(self.udp.serialized_myself + EOF, (self.udp.addr_info[4][0], port))
+            except Exception as e:
+                if self.debug:
+                    self.except_hook(e)
+            finally:
+                time.sleep(packet_resend_after)

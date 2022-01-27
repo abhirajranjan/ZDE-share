@@ -12,7 +12,7 @@ from .abstract import packet_encoding, EOL, EOF, AbstractConnections, \
 from .utils import ConnectionContainer, Connection
 
 class LanConnection(AbstractConnections):
-    def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
+    def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool = False):
         super().__init__()
         self.ipType = ip
         self.myself = {
@@ -25,9 +25,10 @@ class LanConnection(AbstractConnections):
             'tcpPort_sender': None,
             'nickname': None,
         }
+        self.debug = debug
         self.udp.active_connection = ConnectionContainer()
 
-        self.udp.listener_thread = threading.Thread(target=self.listen)
+        self.udp.listener_thread = threading.Thread(target=self.listen, args=(self.debug,))
         self.udp.sender_thread = threading.Thread(target=self.ping)
 
     def generate_myself(self):
@@ -75,7 +76,10 @@ class LanConnection(AbstractConnections):
 
             self.udp.conn.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, ttl_bin)
 
-    def listen(self):
+        if self.debug:
+            print("udp ip: ", self.udp.listener_conn.getsockname()[0])
+
+    def listen(self, debug):
         """ listen for messages """
         data_per_ip = {}
         while True:
@@ -101,8 +105,9 @@ class LanConnection(AbstractConnections):
 
         # checks if there is a fault in tcpIP server:port (as None or invalid) and also if we receive our own message
         if (not data.get('tcpIP_listener', None)) or \
-                (not data.get('tcpPort_listener', None)): #or \
-                #(data == self.myself):
+                (not data.get('tcpPort_listener', None)):
+                return
+        if (not self.debug) and data == self.myself:
             return
         
         self.udp.active_connection.create_connection(device_name=data['deviceName'],

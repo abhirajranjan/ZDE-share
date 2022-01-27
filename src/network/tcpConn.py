@@ -16,8 +16,9 @@ from .mcast import LanConnection
 
 
 class NetworkManager(LanConnection):
-    def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
-        super().__init__(ip)
+    def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool = False):
+        super().__init__(ip=ip, debug=debug)
+        self.debug = debug
         self.setup_socket(ip)
 
     def setup_socket(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
@@ -29,7 +30,8 @@ class NetworkManager(LanConnection):
         self.tcp.tcp_listener.listen(device_to_connect_at_one_time)
         self.tcp.tcp_listener.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        # print(self.tcp.tcp_listener.getsockname())
+        if self.debug:
+            print('tcp ip: ', self.tcp.tcp_listener.getsockname())
 
         self.myself['tcpIP_listener'], self.myself['tcpPort_listener'] = self.tcp.tcp_listener.getsockname()
         self.generate_myself()

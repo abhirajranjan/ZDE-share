@@ -1,10 +1,11 @@
 import socket
-import mcast
 import typing
 import threading
-import abstract
 import json
 
+from .abstract import packet_encoding, device_to_connect_at_one_time, \
+                    listener_buffer, EOL, EOF
+from .mcast import LanConnection
 
 # udp multicast (mcast) is to get refreshed list of devices by
 # sending ping every $packet_resend_after (sec) on mcast server, while TCP server is for
@@ -14,7 +15,7 @@ import json
 # data send via TCP is P2P transmission.
 
 
-class NetworkManager(mcast.LanConnection):
+class NetworkManager(LanConnection):
     def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
         super().__init__(ip)
         self.setup_socket(ip)
@@ -25,7 +26,7 @@ class NetworkManager(mcast.LanConnection):
         self.tcp.tcp_sender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.tcp.tcp_listener.bind(('', 0))
-        self.tcp.tcp_listener.listen(abstract.device_to_connect_at_one_time)
+        self.tcp.tcp_listener.listen(device_to_connect_at_one_time)
         self.tcp.tcp_listener.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         print(self.tcp.tcp_listener.getsockname())
@@ -54,24 +55,20 @@ class NetworkManager(mcast.LanConnection):
     def handle_client(self, conn, addr):
         data_send_prev = b''
         while True:
-            data = conn.recv(abstract.listener_buffer)
+            data = conn.recv(listener_buffer)
 
-            if (a := data.find(abstract.EOL)) != -1:
+            if (a := data.find(EOL)) != -1:
                 data = data[:a]
                 data_send_prev += data
 
-            elif (a := data.find(abstract.EOF)) != -1:
+            elif (a := data.find(EOF)) != -1:
                 data = data[:a]
                 if data_send_prev:
-                    decoded_data = json.loads(data_send_prev.decode(abstract.packet_encoding))
+                    decoded_data = json.loads(data_send_prev.decode(packet_encoding))
                 else:
-                    decoded_data = json.loads(data.decode(abstract.packet_encoding))
+                    decoded_data = json.loads(data.decode(packet_encoding))
                 self.process_data(decoded_data, addr, conn)
 
     def process_data(self, data: dict, addr, conn: socket.socket):
+        # 1v1 connection
         print(data, addr)
-
-
-if __name__ == '__main__':
-    manager = NetworkManager()
-    manager.run()

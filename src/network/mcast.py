@@ -5,9 +5,11 @@ import time
 import typing
 import platform
 import json
-from abstract import *
 import os
 
+from .abstract import packet_encoding, EOL, EOF, AbstractConnections, \
+                    ipv6_grp, ipv4_grp, ttl, port, listener_buffer, packet_resend_after
+from .utils import ConnectionContainer, Connection
 
 class LanConnection(AbstractConnections):
     def __init__(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
@@ -23,7 +25,7 @@ class LanConnection(AbstractConnections):
             'tcpPort_sender': None,
             'nickname': None,
         }
-        self.udp.active_connection = {}
+        self.udp.active_connection = ConnectionContainer()
 
         self.udp.listener_thread = threading.Thread(target=self.listen)
         self.udp.sender_thread = threading.Thread(target=self.ping)
@@ -99,15 +101,17 @@ class LanConnection(AbstractConnections):
 
         # checks if there is a fault in tcpIP server:port (as None or invalid) and also if we receive our own message
         if (not data.get('tcpIP_listener', None)) or \
-                (not data.get('tcpPort_listener', None)) or \
-                (data == self.myself):
+                (not data.get('tcpPort_listener', None)): #or \
+                #(data == self.myself):
             return
-        self.udp.active_connection[Connection(device_name=data['deviceName'],
+        
+        self.udp.active_connection.create_connection(device_name=data['deviceName'],
                                               nickname=data['nickname'],
                                               tcpPort=data['tcpPort_listener'],
-                                              tcpIP=data['tcpIP_listener'])] = True
+                                              tcpIP=data['tcpIP_listener'])
 
-        print(data)
+    def get_connections(self):
+        return self.udp.active_connection.connection_list.copy()
 
     @staticmethod
     def except_hook(e: Exception):

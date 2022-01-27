@@ -42,7 +42,7 @@ class NetworkManager(LanConnection):
         while True:
             # new connection obtained
             conn, addr = self.tcp.tcp_listener.accept()
-            print(addr, 'yes its connecting')
+            print(addr, 'connected')
             client_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
             client_thread.start()
 

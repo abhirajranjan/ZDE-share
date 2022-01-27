@@ -29,7 +29,7 @@ class NetworkManager(LanConnection):
         self.tcp.tcp_listener.listen(device_to_connect_at_one_time)
         self.tcp.tcp_listener.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        print(self.tcp.tcp_listener.getsockname())
+        # print(self.tcp.tcp_listener.getsockname())
 
         self.myself['tcpIP_listener'], self.myself['tcpPort_listener'] = self.tcp.tcp_listener.getsockname()
         self.generate_myself()

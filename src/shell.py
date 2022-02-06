@@ -1,19 +1,20 @@
 import typing
-import subprocess
 import sys
 import code
 
 from network.main import NetworkManager
 
 
-intro = "Alora Python Shell\nuse nm to access NetworkManager class"
+intro = """
+-------Alora Python Shell------------
+use nm to access NetworkManager class"""
 
 def start_server(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool = False):
     nm = NetworkManager(ip=ip, debug=debug)
     nm.run()
     return nm
 
-def run(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool = False):
+def shell(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool = False):
     try:
         nm = start_server(ip=ip, debug=debug)
         execute(nm)
@@ -25,4 +26,4 @@ def execute(nm: NetworkManager):
     sys.exit()
 
 if __name__ == "__main__":
-    run()
+    shell()

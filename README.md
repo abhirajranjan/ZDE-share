@@ -2,7 +2,7 @@
 
 Alora Share tends to replicate "Apple Environment" on mobile and desktop OS
 
-__Alora Share for mobile has active development under__ <https://github.com/abhirajranjan/alora-share-mobile>
+__Alora Share for mobile will be in development under__ <https://github.com/abhirajranjan/alora-share-mobile>
 
 ## Requirements
 
@@ -20,41 +20,81 @@ Full requirements are listed under requirements.txt
 
 * All the source code is under src/.
 
-* All guides and developer docs which are needed to understand the flow is under docs/.
-
 * src/network/ handle all the network creation and all backend stuffs.
-
-* src/gui/ controls all graphical user stuffs.
 
 ## Getting started
 
-1. clone this repo and change directory
+1. clone this repo and change directory to src
 
 ```bash
-git clone https://github.com/abhirajranjan/alora-share.git && cd alora-share
+git clone https://github.com/abhirajranjan/alora-share.git && cd alora-share/src
 ```
 
-2. project can run in cli as well as in gui enviroment
+2. project can run in different enviroments
 
-* For CLI
+    for debug mode add -d or --debug at end of any enviroment command
 
+<br>
+
+* For command line usage
+
+    view [#cli](#cli)  section for more information
+
+    - --cli can be replaced by -c or -cli
 ```bash
 python3 main.py --cli
 ```
 
-* For GUI
-
-```bash
-python3 main.py
-
-or
-
-python3 main.py --gui
+  * For interactive  python like shell 
+    
+    - --shell can be replaced with -s or -shell
+```shell
+python3 main.py --shell 
 ```
 
-## how to
+## cli
+command line supports few commands that can be directly accessed 
 
-* how to use cli can be found under docs/ .
+### help
+list all the commands with usage structure
+
+### list
+lists all the active connection that can be found in the network
+
+```
+>>> list
+|---------------|
+|  1 - GenHost  |
+|---------------|
+
+>>>
+```
+
+### ping
+use to ping a device
+
+```
+>>> list
+|---------------|
+|  1 - GenHost  |
+|---------------|
+
+>>> ping 1 GenHost
+```
+
+### sendfile
+use to send a file to a device
+
+[ TODO : able to send file to multiple use at a time ]
+
+```
+>>> list
+|---------------|
+|  1 - GenHost  |
+|---------------|
+
+>>> sendfile 1 GenHost /Downloads/test1.zip
+```
 
 ## Inspiration & Reference
 

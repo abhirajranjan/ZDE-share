@@ -36,7 +36,11 @@ def parser():
                 cliparser()
     
     # default
-    cliparser()
+    if ("-d" in sys.argv) or ('--debug' in sys.argv):
+        cliparser(debug=True)
+    else:
+        cliparser()
+
 
 if __name__ == "__main__":
     parser()

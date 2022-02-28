@@ -67,7 +67,6 @@ class NetworkManager(LanConnection):
                     container.process_function(data, addr, conn, container)
 
                 elif (a := data.rfind(EOF)) != -1:
-                    print('processsing')
                     data = data[:a]
                     if data_send_prev:
                         decoded_data = json.loads(data_send_prev.decode(packet_encoding))

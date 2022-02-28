@@ -7,7 +7,7 @@ import platform
 import json
 import os
 
-from .abstract import packet_encoding, EOL, EOF, AbstractConnections, \
+from .abstract import packet_encoding, EOF, AbstractConnections, \
                     ipv6_grp, ipv4_grp, ttl, port, listener_buffer, packet_resend_after
 from .utils import ConnectionContainer, Connection
 
@@ -86,10 +86,6 @@ class LanConnection(AbstractConnections):
             try:
                 data, sender = self.udp.listener_conn.recvfrom(listener_buffer)
 
-                if (a := data.find(EOL)) != -1:
-                    data = data[:a]
-                    data_per_ip[sender] = data_per_ip[sender] + data if data_per_ip.get(sender, 0) else data
-
                 if (a := data.find(EOF)) != -1:
                     data = data[:a]
                     if sender in data_per_ip:
@@ -100,6 +96,10 @@ class LanConnection(AbstractConnections):
 
                     if decoded_data.get('type', None) == 'MySelf':
                         self.handle_active_connections(decoded_data)
+                
+                else:
+                    data_per_ip[sender] = data_per_ip[sender] + data if data_per_ip.get(sender, 0) else data
+
             except Exception as e:
                 if self.debug:
                     self.except_hook(e)

@@ -5,7 +5,7 @@ import json
 import pickle
 
 from .abstract import packet_encoding, device_to_connect_at_one_time, \
-                    listener_buffer, EOL, EOF, ClassObject
+                    listener_buffer, EOF, ClassObject
 from .mcast import LanConnection
 
 # udp multicast (mcast) is to get refreshed list of devices by
@@ -63,22 +63,21 @@ class NetworkManager(LanConnection):
         while True:
             try:
                 data = conn.recv(listener_buffer)
-                print(data)
-                print(container.process_function)
                 if container.process_function:
                     container.process_function(data, addr, conn, container)
 
-                elif (a := data.find(EOL)) != -1:
-                    data = data[:a]
-                    data_send_prev += data
-
-                elif (a := data.find(EOF)) != -1:
+                elif (a := data.rfind(EOF)) != -1:
+                    print('processsing')
                     data = data[:a]
                     if data_send_prev:
                         decoded_data = json.loads(data_send_prev.decode(packet_encoding))
                     else:
                         decoded_data = json.loads(data.decode(packet_encoding))
                     self.process_data(decoded_data, addr, conn, container)
+
+                else:
+                    data_send_prev += data
+
             except Exception as e:
                 if self.debug:
                     self.except_hook(e)
@@ -96,12 +95,26 @@ class NetworkManager(LanConnection):
                 print("set process to bytes")
                 container.process_filename = data["metadata"]["filename"]
                 container.process_function = self.process_bytes
-    
-    def process_bytes(self, data: bytes, addr, conn: socket.socket, container: ClassObject):
-        with open(container.process_filename, 'a') as file:
-            file.write(data[:-1].decode(packet_encoding))
 
-        # 'aaff\x01'[-1] gives 1 not b'\x01' thats why id doesnt match with EOF.
-        if data[-1] == EOF[-1]:
+            elif data["data-type"] == "ping":
+                print("set process to ping")
+                container.process_function = self.recv_ping
+                container.pingData = ''
+    
+    def process_bytes(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
+        if data.endswith(EOF):
             del container.process_filename
+            container.process_function = None
+            data = data[:data.rfind(EOF)]
+
+        with open(container.process_filename, 'a') as file:
+            file.write(data.decode(packet_encoding))
+
+    def recv_ping(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
+        container.pingData += data[:-1].decode(packet_encoding)
+        
+        if data.endswith(EOF):
+            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": container.pingData})
+            print(container.pingData)
+            del container.pingData
             container.process_function = None

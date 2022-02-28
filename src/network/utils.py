@@ -71,3 +71,15 @@ class ConnectionContainer:
 
         else:
             self.connection_list[key] = value
+
+
+class UI_connector:
+    def __init__(self):
+        self.func = None
+
+    def register(self, func):
+        self.func = func
+
+    def pipe(self, *args, **kwargs):
+        if self.func:
+            self.func(*args, **kwargs)

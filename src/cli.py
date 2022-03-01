@@ -1,8 +1,10 @@
 import sys
 import typing
 
+from network.constants import EOF_string
+
 from network.main import NetworkManager
-from network.generate_requests import File_transfer
+from network.generate_requests import File_transfer, map_request
 
 
 def maxlen(arg: typing.Iterable) -> int:
@@ -46,7 +48,8 @@ HELP['general'] = '\n'.join(f"{k}".ljust(10) + f": {v[0]}" for k,v in HELP.items
 HELP['general'] += "\n\ntype help cmd for cmd specific help"
 
 
-def ping(*args, **kwargs):
+def server_res(*args, **kwargs):
+    # {"type":"ping", "data-type":str, "data": container.pingData}
     print(*args, **kwargs)
 
 def list_connections(nm_pt: NetworkManager, conns: dict) -> None:
@@ -63,7 +66,7 @@ def list_connections(nm_pt: NetworkManager, conns: dict) -> None:
 
 def cliparser(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool = False):
     nm_pt = NetworkManager(ip=ip, debug=debug)
-    nm_pt.ui_connector.register(ping)
+    nm_pt.ui_connector.register(server_res)
     nm_pt.run()
     
     while True:
@@ -73,8 +76,9 @@ def cliparser(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool =
 
         cmd = cmd.split()
 
-        if not len(cmd):
+        if len(cmd) == 0:
             print(f'Command {" ".join(cmd)} not found. Type "help" to find possible commands.')
+            continue
 
         if cmd[0] in CLI_ARGUMENTS:
             conns = nm_pt.get_connections()
@@ -104,8 +108,13 @@ def cliparser(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool =
                     if not conn:
                         print("connection not active with specified user")
                         continue
-                    nm_pt.tcp.tcp_sender.sendto(File_transfer("ping", 'ping'), (conn.tcpIP,conn.tcpPort))
-                    nm_pt.tcp.tcp_sender.sendto()
+                    with nm_pt.tcp.tcp_sender((conn.tcpIP,conn.tcpPort)) as sock:
+                        for to_send_data in map_request(File_transfer("ping", 'ping')+EOF_string):
+                            sock.sendall(to_send_data)
+                        
+                        for to_send_data in map_request("ping!"+EOF_string):
+                            sock.sendall(to_send_data)
+                            print(len(to_send_data))
                     continue
 
             print(f'incorrect use of {" ".join(cmd)}.')

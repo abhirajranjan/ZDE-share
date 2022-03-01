@@ -2,7 +2,7 @@ import socket
 import typing
 import threading
 import json
-import pickle
+import socket
 
 from .abstract import packet_encoding, device_to_connect_at_one_time, \
                     listener_buffer, EOF, ClassObject
@@ -25,7 +25,7 @@ class NetworkManager(LanConnection):
     def setup_socket(self, ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4'):
         super().setup_socket(ip)
         self.tcp.tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.tcp.tcp_sender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcp.tcp_sender = socket.create_connection
 
         self.tcp.tcp_listener.bind(('', 0))
         self.tcp.tcp_listener.listen(device_to_connect_at_one_time)
@@ -43,7 +43,8 @@ class NetworkManager(LanConnection):
         while True:
             # new connection obtained
             conn, addr = self.tcp.tcp_listener.accept()
-            print(addr, 'connected')
+            if self.debug:
+                print(f'\n[INFO]: {addr} connected.\n')
             classcontainer = ClassObject()
             # process func handles the process to exec after getting headers 
             classcontainer.process_function = None
@@ -64,12 +65,13 @@ class NetworkManager(LanConnection):
             try:
                 data = conn.recv(listener_buffer)
                 if container.process_function:
-                    container.process_function(data, addr, conn, container)
+                    if container.process_function(data, addr, conn, container):
+                        break
 
-                elif (a := data.rfind(EOF)) != -1:
-                    data = data[:data.rfind(EOF)]
+                elif data.rstrip().endswith(EOF):
+                    data = data[:data.rfind(EOF)].rstrip()
                     if data_send_prev:
-                        decoded_data = json.loads(data_send_prev.decode(packet_encoding))
+                        decoded_data = json.loads((data_send_prev+data).decode(packet_encoding))
                     else:
                         decoded_data = json.loads(data.decode(packet_encoding))
                     self.process_data(decoded_data, addr, conn, container)
@@ -91,17 +93,15 @@ class NetworkManager(LanConnection):
             assert "filename" in data["metadata"]
 
             if data["data-type"] == "bytes":
-                print("set process to bytes")
                 container.process_filename = data["metadata"]["filename"]
                 container.process_function = self.process_bytes
 
             elif data["data-type"] == "ping":
-                print("set process to ping")
                 container.process_function = self.recv_ping
                 container.pingData = ''
     
     def process_bytes(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
-        if data.endswith(EOF):
+        if data.rstrip().endswith(EOF):
             del container.process_filename
             container.process_function = None
             data = data[:data.rfind(EOF)]
@@ -110,10 +110,11 @@ class NetworkManager(LanConnection):
             file.write(data.decode(packet_encoding))
 
     def recv_ping(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
-        container.pingData += data[:-1].decode(packet_encoding)
-        
-        if data.endswith(EOF):
-            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": container.pingData})
-            print(container.pingData)
-            del container.pingData
+        if data.rstrip().endswith(EOF):
             container.process_function = None
+            data = data[:data.rfind(EOF)].rstrip()
+            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": container.pingData+data})
+            del container.pingData
+            return 1
+
+        container.pingData += data.decode(packet_encoding)

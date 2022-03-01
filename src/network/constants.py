@@ -11,6 +11,7 @@ ipv6_grp = 'ff15:7079:7468:6f6e:6465:6d6f:6d63:6173'
 ttl = 1  # Increase to reach other networks
 listener_buffer = 1024
 EOF = b'\0'
+EOF_string = '\0'
 packet_encoding = 'UTF8'  # should be same for all
 packet_resend_after = 1  # in seconds
 device_to_connect_at_one_time = 20

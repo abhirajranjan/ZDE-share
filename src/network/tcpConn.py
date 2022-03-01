@@ -98,7 +98,7 @@ class NetworkManager(LanConnection):
 
             elif data["data-type"] == "ping":
                 container.process_function = self.recv_ping
-                container.pingData = ''
+                container.pingData = b''
     
     def process_bytes(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
         if data.rstrip().endswith(EOF):
@@ -113,8 +113,8 @@ class NetworkManager(LanConnection):
         if data.rstrip().endswith(EOF):
             container.process_function = None
             data = data[:data.rfind(EOF)].rstrip()
-            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": container.pingData+data})
+            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": (container.pingData+data).decode(packet_encoding)})
             del container.pingData
             return 1
 
-        container.pingData += data.decode(packet_encoding)
+        container.pingData += data

@@ -101,13 +101,18 @@ class NetworkManager(LanConnection):
                 container.pingData = b''
     
     def process_bytes(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
+        rt = 0
         if data.rstrip().endswith(EOF):
-            del container.process_filename
             container.process_function = None
-            data = data[:data.rfind(EOF)]
-
+            data = data[:data.rfind(EOF)].rstrip()
+            del container.process_filename
+            rt = 1
+            
         with open(container.process_filename, 'a') as file:
             file.write(data.decode(packet_encoding))
+        
+        if rt:
+            return 1
 
     def recv_ping(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
         if data.rstrip().endswith(EOF):

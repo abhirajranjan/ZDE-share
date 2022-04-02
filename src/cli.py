@@ -1,7 +1,9 @@
+from fileinput import filename
 import sys
 import typing
+import pathlib
 
-from network.constants import EOF_string
+from network.constants import EOF, EOF_string, listener_buffer
 
 from network.main import NetworkManager
 from network.generate_requests import File_transfer, map_request
@@ -24,10 +26,16 @@ HELP = {
     "sendfile": [
         "send a file to specific device on network",
         [
-            ">>> sendfile {location of file}",
-            "sendfile /downloads/test1.txt",
+            ">>> sendfile {location of file} {no on list}",
+            "",
+            "if 'list' returns ",
+            "|-------------|",
+            "| 1 - GenHost |",
+            "|-------------|",
+            "",
+            "sendfile /downloads/test1.txt 1",
             "or",
-            "sendfile C://test1.txt"
+            "sendfile C://test1.txt 1"
         ]
     ],
     "ping": [
@@ -109,13 +117,35 @@ def cliparser(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool =
                         print("connection not active with specified user")
                         continue
                     with nm_pt.tcp.tcp_sender((conn.tcpIP,conn.tcpPort)) as sock:
-                        for to_send_data in map_request(File_transfer("ping", 'ping')+EOF_string):
+                        for to_send_data in map_request(File_transfer(filename = "ping", data_type = 'ping')+EOF_string):
                             sock.sendall(to_send_data)
                         
                         for to_send_data in map_request("ping!"+EOF_string):
                             sock.sendall(to_send_data)
                             print(len(to_send_data))
                     continue
+            
+            elif cmd[0] == 'sendfile':
+                if len(cmd) == 3:
+                    # if path is under quotes, remove the quotes 
+                    if (cmd[2].startswith("'") and cmd[2].endswith("'")) or (cmd[2].startswith('"') and cmd[2].endswith('"')):
+                        cmd[2] = cmd[1:-1]
+                    
+                    path = pathlib.Path(cmd[1])
+                    # check if path exists 
+                    if not path.exists():
+                        # check is path points to file
+                        if path.is_file():
+                            with nm_pt.tcp.tcp_sender((conn.tcpIP,conn.tcpPort)) as sock:
+                                for to_send_data in map_request(File_transfer(filename = path.name, data_type = 'bytes')+EOF_string):
+                                    sock.sendall(to_send_data)
+                                
+                                with open(path, 'wb') as file:
+                                    while a := file.read(listener_buffer):
+                                        sock.sendall(a)
+
+                                sock.sendall(EOF)
+                            continue
 
             print(f'incorrect use of {" ".join(cmd)}.')
         else:

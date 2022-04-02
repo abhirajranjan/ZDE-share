@@ -4,8 +4,10 @@ import threading
 import json
 import socket
 
-from .abstract import packet_encoding, device_to_connect_at_one_time, \
-                    listener_buffer, EOF, ClassObject
+from network.constants import PACKET_ENCODING
+
+from .abstract import PACKET_RESEND_AFTER, DEVICE_TO_CONNECT_AT_ONE_TIME, \
+                    LISTENER_BUFFER, EOF, Abstract
 from .mcast import LanConnection
 
 # udp multicast (mcast) is to get refreshed list of devices by
@@ -28,7 +30,7 @@ class NetworkManager(LanConnection):
         self.tcp.tcp_sender = socket.create_connection
 
         self.tcp.tcp_listener.bind(('', 0))
-        self.tcp.tcp_listener.listen(device_to_connect_at_one_time)
+        self.tcp.tcp_listener.listen(DEVICE_TO_CONNECT_AT_ONE_TIME)
         self.tcp.tcp_listener.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         if self.debug:
@@ -45,7 +47,7 @@ class NetworkManager(LanConnection):
             conn, addr = self.tcp.tcp_listener.accept()
             if self.debug:
                 print(f'\n[INFO]: {addr} connected.\n')
-            classcontainer = ClassObject()
+            classcontainer = Abstract()
             # process func handles the process to exec after getting headers 
             classcontainer.process_function = None
             client_thread = threading.Thread(target=self.handle_client, args=(conn, addr, classcontainer))
@@ -63,7 +65,7 @@ class NetworkManager(LanConnection):
         data_send_prev = b''
         while True:
             try:
-                data = conn.recv(listener_buffer)
+                data = conn.recv(LISTENER_BUFFER)
                 if container.process_function:
                     if container.process_function(data, addr, conn, container):
                         break
@@ -71,9 +73,9 @@ class NetworkManager(LanConnection):
                 elif data.rstrip().endswith(EOF):
                     data = data[:data.rfind(EOF)].rstrip()
                     if data_send_prev:
-                        decoded_data = json.loads((data_send_prev+data).decode(packet_encoding))
+                        decoded_data = json.loads((data_send_prev+data).decode(PACKET_ENCODING))
                     else:
-                        decoded_data = json.loads(data.decode(packet_encoding))
+                        decoded_data = json.loads(data.decode(PACKET_ENCODING))
                     self.process_data(decoded_data, addr, conn, container)
 
                 else:
@@ -84,7 +86,7 @@ class NetworkManager(LanConnection):
                     self.except_hook(e)
                 data_send_prev = b''
 
-    def process_data(self, data: dict, addr, conn: socket.socket, container: ClassObject):
+    def process_data(self, data: dict, addr, conn: socket.socket, container: Abstract):
         # 1v1 connection
         assert "event-type" in data
         if data["event-type"] == 'data-transfer':
@@ -100,7 +102,7 @@ class NetworkManager(LanConnection):
                 container.process_function = self.recv_ping
                 container.pingData = b''
     
-    def process_bytes(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
+    def process_bytes(self, data: bytes, addr, conn: socket.socket, container: Abstract) -> None:
         rt = 0
         if data.rstrip().endswith(EOF):
             container.process_function = None
@@ -109,16 +111,16 @@ class NetworkManager(LanConnection):
             rt = 1
             
         with open(container.process_filename, 'a') as file:
-            file.write(data.decode(packet_encoding))
+            file.write(data.decode(PACKET_RESEND_AFTER))
         
         if rt:
             return 1
 
-    def recv_ping(self, data: bytes, addr, conn: socket.socket, container: ClassObject) -> None:
+    def recv_ping(self, data: bytes, addr, conn: socket.socket, container: Abstract) -> None:
         if data.rstrip().endswith(EOF):
             container.process_function = None
             data = data[:data.rfind(EOF)].rstrip()
-            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": (container.pingData+data).decode(packet_encoding)})
+            self.ui_connector.pipe({"type":"ping", "data-type":str, "data": (container.pingData+data).decode(PACKET_ENCODING)})
             del container.pingData
             return 1
 

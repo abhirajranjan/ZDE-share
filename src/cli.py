@@ -3,7 +3,7 @@ import sys
 import typing
 import pathlib
 
-from network.constants import EOF, EOF_string, listener_buffer
+from network.constants import EOF, EOF_STRING, LISTENER_BUFFER
 
 from network.main import NetworkManager
 from network.generate_requests import File_transfer, map_request
@@ -47,7 +47,7 @@ HELP = {
             "|-------------|",
             "| 1 - GenHost |",
             "|-------------|",
-            ">>> ping 1 GenHost"
+            ">>> ping 1"
         ]
     ]
 }
@@ -111,16 +111,16 @@ def cliparser(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool =
                 continue
             
             elif cmd[0] == 'ping':
-                if len(cmd) == 3:
+                if len(cmd) == 2:
                     conn = list(conns)[int(cmd[1])-1]
                     if not conn:
                         print("connection not active with specified user")
                         continue
                     with nm_pt.tcp.tcp_sender((conn.tcpIP,conn.tcpPort)) as sock:
-                        for to_send_data in map_request(File_transfer(filename = "ping", data_type = 'ping')+EOF_string):
+                        for to_send_data in map_request(File_transfer(filename = "ping", data_type = 'ping')+EOF_STRING):
                             sock.sendall(to_send_data)
                         
-                        for to_send_data in map_request("ping!"+EOF_string):
+                        for to_send_data in map_request("ping!"+EOF_STRING):
                             sock.sendall(to_send_data)
                             print(len(to_send_data))
                     continue
@@ -137,11 +137,11 @@ def cliparser(ip: typing.Union[str('ipv4'), str('ipv6')] = 'ipv4', debug: bool =
                         # check is path points to file
                         if path.is_file():
                             with nm_pt.tcp.tcp_sender((conn.tcpIP,conn.tcpPort)) as sock:
-                                for to_send_data in map_request(File_transfer(filename = path.name, data_type = 'bytes')+EOF_string):
+                                for to_send_data in map_request(File_transfer(filename = path.name, data_type = 'bytes')+EOF_STRING):
                                     sock.sendall(to_send_data)
                                 
                                 with open(path, 'wb') as file:
-                                    while a := file.read(listener_buffer):
+                                    while a := file.read(LISTENER_BUFFER):
                                         sock.sendall(a)
 
                                 sock.sendall(EOF)

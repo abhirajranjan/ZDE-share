@@ -16,7 +16,7 @@ class Connection:
         self.__timer_thread__.start()
 
     def remove_timer(self):
-        if time.time() - self.time > connection_remove_time:
+        if time.time() - self.time > CONNECTION_REMOVE_TIME:
             self.parent.remove_connection(self)
 
     def update_time(self):
@@ -24,7 +24,7 @@ class Connection:
 
     def __timer_func__(self):
         while True:
-            time.sleep(connection_remove_time)
+            time.sleep(CONNECTION_REMOVE_TIME)
             if self.time == None:
                 self.destroy()
                 break

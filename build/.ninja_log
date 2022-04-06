@@ -1,0 +1,7 @@
+# ninja log v5
+1	5682	1649271103927676900	CMakeFiles/aloraShare.dir/network/tcp.cpp.o	b7b011aa6b202de2
+1	5741	1649271103964756000	CMakeFiles/aloraShare.dir/network/main.cpp.o	dcdb26cfd825864f
+1	5743	1649271103930159900	CMakeFiles/aloraShare.dir/network/udp.cpp.o	ac0fc47d307b5ffc
+0	6419	1649271104663857800	CMakeFiles/aloraShare.dir/network/base.cpp.o	4ed4856cbc6bf472
+6419	6744	1649271105007429700	aloraShare	c4307a781c839a12
+3	299	1649271146266192300	aloraShare	c4307a781c839a12

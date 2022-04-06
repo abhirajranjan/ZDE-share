@@ -5,10 +5,10 @@ Main::Main():tcp(){
 
 int Main::run(){
     base::io(tcpfd, udpfd, tcpaddr);
+    return 1;
 }
 
 int main(){
     Main obj;
-    obj.run();
-    return 1;
+    return obj.run();
 }

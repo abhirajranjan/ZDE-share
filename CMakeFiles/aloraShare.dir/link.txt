@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/aloraShare.dir/network/base.cpp.o CMakeFiles/aloraShare.dir/network/main.cpp.o CMakeFiles/aloraShare.dir/network/tcp.cpp.o CMakeFiles/aloraShare.dir/network/udp.cpp.o -o aloraShare 

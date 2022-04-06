@@ -3,11 +3,12 @@
 #ifndef TCP_H
 #define TCP_H
 
+
 class tcp: public udp{
     public:
         tcp();
 
-        int tcpfd;
+        sock_t tcpfd;
         struct sockaddr_in tcpaddr;
 };
 

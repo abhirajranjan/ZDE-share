@@ -1,17 +1,27 @@
 #include "tcp.hpp"
+
+#ifdef _WIN32
+	#include <Winsock2.h>
+	#include <WS2tcpip.h>
+#else
+	#include <unistd.h>
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
+#endif
+
+#include <string.h>
 #include <iostream>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 tcp::tcp():udp(){
     int opt = 1;
-    if( (tcpfd = socket(AF_INET , SOCK_STREAM , 0)) == 0)
+
+	tcpfd = socket(AF_INET , SOCK_STREAM , 0);
+    if((!validSocket(tcpfd)))
 	{
 		perror("socket failed");
 		exit(EXIT_FAILURE);
@@ -39,7 +49,7 @@ tcp::tcp():udp(){
     struct sockaddr_in my_addr;
 	
 	//bind the socket to localhost port 8888
-	if (bind(tcpfd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr))<0)
+	if (bind(tcpfd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr)) < 0)
 	{
 		perror("bind failed");
 		exit(EXIT_FAILURE);
@@ -48,7 +58,7 @@ tcp::tcp():udp(){
 
     char myIP[16];
 
-    bzero(&tcpaddr, sizeof(my_addr));
+    //bzero(&tcpaddr, sizeof(my_addr));
     socklen_t len = sizeof(my_addr);
     getsockname(tcpfd, (struct sockaddr *) &my_addr, &len);
     inet_ntop(AF_INET, &my_addr.sin_addr, myIP, sizeof(myIP));

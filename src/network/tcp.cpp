@@ -46,7 +46,7 @@ tcp::tcp():udp(){
     inet_ntop(AF_INET, &(tcpaddr.sin_addr), str, INET_ADDRSTRLEN);
     std::cout << str;
 
-    struct sockaddr_in my_addr;
+    
 	
 	//bind the socket to localhost port 8888
 	if (bind(tcpfd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr)) < 0)
@@ -58,6 +58,7 @@ tcp::tcp():udp(){
 
     char myIP[16];
 
+	struct sockaddr_in my_addr;
     //bzero(&tcpaddr, sizeof(my_addr));
     socklen_t len = sizeof(my_addr);
     getsockname(tcpfd, (struct sockaddr *) &my_addr, &len);

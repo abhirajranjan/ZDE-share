@@ -1,4 +1,4 @@
-# Install script for directory: /storage1/projects/alora-share/src
+# Install script for directory: /storage1/projects/alora-share
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

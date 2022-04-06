@@ -4,7 +4,11 @@ Main::Main():tcp(){
 }
 
 int Main::run(){
-    base::io(tcpfd, udpfd, tcpaddr);
+    char *str = "hello there";
+    if(udp::send(str) < 0) {
+        perror("sendto");
+    }
+    base::io(tcpfd, udpfd_recv, tcpaddr);
     return 1;
 }
 

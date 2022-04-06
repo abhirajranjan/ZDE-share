@@ -1,3 +1,0 @@
-/storage1/projects/alora-share/CMakeFiles/rebuild_cache.dir
-/storage1/projects/alora-share/CMakeFiles/edit_cache.dir
-/storage1/projects/alora-share/CMakeFiles/aloraShare.dir

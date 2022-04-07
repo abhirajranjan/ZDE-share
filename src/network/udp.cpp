@@ -124,8 +124,21 @@ void udp::init() {
     }
 }
 
+void udp::sender(){
+    while (udp::sender_status != returned){
+        // send datagram myself
+        udp::send("hello guys\n\0"); 
+        sleep(PCKT_SND_AFTR);
+    }
+}
 
 udp::udp():base(2) {
     initWinSocket();
     init();
+
+    sender_status = continued;
+    std::thread sender_thread([this](){
+        udp::sender();
+    });
+    sender_thread.detach();
 }

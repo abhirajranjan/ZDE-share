@@ -4,6 +4,7 @@
 #define MAX_CLIENT 30
 #define PORT 8888
 #define _EOF 0
+#define PCKT_SND_AFTR 1 // in sec
 
 #if defined(_WIN32) || defined(WIN32)
 #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict

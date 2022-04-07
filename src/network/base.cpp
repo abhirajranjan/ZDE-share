@@ -52,7 +52,6 @@ base::base(int x){
 }
 
 
-
 int base::io(sock_t tcpfd, sock_t udpfd, struct sockaddr_in address) {
     int max_sd, i, activity, valread, addrlen;
 	sock_t sd, new_socket;

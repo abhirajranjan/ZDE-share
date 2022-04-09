@@ -133,6 +133,8 @@ void udp::recv_udp(){
         if ((valread = recv(udpfd_recv, udp_buffer, 1024, 0))){
             _udp_buffer = udp_buffer;
 
+            std::cout << _udp_buffer << std::endl;
+            
             //check if recieved packet is json or not
             // if yes then pass on to parser.
             if(json::accept(_udp_buffer)){

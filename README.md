@@ -28,7 +28,7 @@ __Alora Share for mobile will be in development under__ <https://github.com/abhi
 
 ```bash
 git clone https://github.com/abhirajranjan/alora-share.git && cd alora-share
-cmake --build .
+cmake --build ./build --config Debug --target all --
 ```
 
 required binary will be under bin folder

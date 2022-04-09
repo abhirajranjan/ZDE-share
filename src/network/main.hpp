@@ -7,6 +7,7 @@ class Main: public tcp{
     public:
         Main();
         int run();
+        void initialize_myself(sock_t tcpfd);
 };
 
 #endif

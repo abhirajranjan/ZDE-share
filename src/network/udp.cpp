@@ -56,7 +56,7 @@ void udp::setup_addr(struct sockaddr_in *addr, int port, char *address) {
     addr -> sin_port = htons(port);
 }
 
-int udp::send(char* str){
+int udp::send(char* str, int length){
     return sendto(
         udpfd_sender,
         str,
@@ -126,8 +126,14 @@ void udp::init() {
 
 void udp::sender(){
     while (udp::sender_status != returned){
-        // send datagram myself
-        udp::send("hello guys\n\0"); 
+        std::string str = myself.dump();
+        char *buff = (char *) calloc(str.length(), sizeof(char));
+        
+        for(int i=0; i<str.length(); i++){
+            *(buff+i) = str[i];
+        }
+        udp::send(buff, str.length());
+        free(buff);
         sleep(PCKT_SND_AFTR);
     }
 }

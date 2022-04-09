@@ -17,6 +17,48 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+std::string getlocalip(){
+    const char* google_dns_server = "8.8.8.8";
+    int dns_port = 53;
+
+    struct sockaddr_in serv;
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sock < 0)
+    {
+        std::cout << "Socket error" << std::endl;
+    }
+
+    memset(&serv, 0, sizeof(serv));
+    serv.sin_family = AF_INET;
+    serv.sin_addr.s_addr = inet_addr(google_dns_server);
+    serv.sin_port = htons(dns_port);
+
+    int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
+    if (err < 0)
+    {
+        std::cout << "Error number: " << errno
+            << ". Error message: " << strerror(errno) << std::endl;
+    }
+
+    struct sockaddr_in name;
+    socklen_t namelen = sizeof(name);
+    err = getsockname(sock, (struct sockaddr*)&name, &namelen);
+
+    char buffer[80];
+    const char* p = inet_ntop(AF_INET, &name.sin_addr, buffer, 80);
+    if(p != NULL)
+    {
+        std::string str = buffer;
+        return str;
+    }
+    else
+    {
+        perror("could not determine hostname: ");
+        exit(EXIT_FAILURE);
+    }
+}
+
 tcp::tcp():udp(){
     int opt = 1;
 
@@ -65,9 +107,11 @@ tcp::tcp():udp(){
     inet_ntop(AF_INET, &my_addr.sin_addr, myIP, sizeof(myIP));
     int myPort = ntohs(my_addr.sin_port);
 
-    printf("Local ip address: %s\n", myIP);
+    //printf("Local ip address: %s\n", myIP);
     printf("Local port : %u\n", myPort);
 
+	tcp_ipport = myPort;
+	tcp_ipaddr = getlocalip();
 
 	if (listen(tcpfd, MAX_CLIENT) < 0)
 	{

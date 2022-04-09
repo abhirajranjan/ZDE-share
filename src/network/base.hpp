@@ -26,6 +26,9 @@
 #include <bits/stdc++.h>
 #endif
 
+#include "../json/single_include/nlohmann/json.hpp"
+using json = nlohmann::json;
+
 
 class base
 {
@@ -33,18 +36,28 @@ public:
 
 #ifdef _WIN32
     typedef SOCKET sock_t;
-    int validSocket(SOCKET sock);
-    int pcloseSocket(SOCKET sock);
 #else
     typedef int sock_t;
-    int validSocket(int sockfd);
-    int pcloseSocket(int sockfd);
 #endif // _WIN32
 
+    int validSocket(sock_t sockfd);
+    int pcloseSocket(sock_t sockfd);
+
     base(int x);
-    sock_t client_sock[MAX_CLIENT];
+    void initialize_myself(sock_t tcpfd);
+
+    json myself;
     char buffer[1025];
-    char * MULTICAST_IP; // default;
+
+    sock_t client_sock[MAX_CLIENT];
+
+    char udp_buffer[1025];
+    std::string _udp_buffer;
+    
+    char client_buffer[MAX_CLIENT][1025];
+    
+
+    char* MULTICAST_IP; // default;
     int max_sd, i, sd, activity, valread;   
   
     //set of socket descriptors

@@ -9,6 +9,8 @@ class tcp: public udp{
         tcp();
 
         sock_t tcpfd;
+        std::string tcp_ipaddr;
+        int tcp_ipport;
         struct sockaddr_in tcpaddr;
 };
 

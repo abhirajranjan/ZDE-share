@@ -9,20 +9,24 @@ class udp: public base{
     void setup_addr(struct sockaddr_in *addr, int port);
     void setup_addr(struct sockaddr_in *addr, int port, char *address);
 
+    std::thread sender_thread;
+
     enum statuses {blocked, returned, continued};
     enum statuses sender_status;
 
     void sender();
+    void recv_udp();
 
     public: 
         udp();
+        void create_threads();
 
         sock_t udpfd_recv;
         sock_t udpfd_sender;
         struct sockaddr_in udpaddr_recv;
         struct sockaddr_in udpaddr_sender;
 
-        int send(char *str, int length);
+        int _send(char *str, int length);
 };
 
 #endif

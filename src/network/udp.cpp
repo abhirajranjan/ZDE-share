@@ -19,26 +19,12 @@
 #include <stdio.h>
 #include <iostream>
  
-
 #include "udp.hpp"
 
 #define MSGBUFSIZE 256
 #define TRUE 1
 #define FALSE 0
 
-void initWinSocket() {
-#ifdef _WIN32
-    //
-    // Initialize Windows Socket API with given VERSION.
-    //
-    WSADATA wsaData;
-    int result = WSAStartup(0x0101, &wsaData);
-    if (result) {
-        perror("WSAStartup");
-        exit(EXIT_FAILURE);
-    }
-#endif
-}
 
 void udp::setup_addr(struct sockaddr_in *addr, int port) {
     // set up destination address
@@ -56,7 +42,7 @@ void udp::setup_addr(struct sockaddr_in *addr, int port, char *address) {
     addr -> sin_port = htons(port);
 }
 
-int udp::send(char* str, int length){
+int udp::_send(char* str, int length){
     return sendto(
         udpfd_sender,
         str,
@@ -126,25 +112,52 @@ void udp::init() {
 
 void udp::sender(){
     while (udp::sender_status != returned){
+        continue;
         std::string str = myself.dump();
         char *buff = (char *) calloc(str.length(), sizeof(char));
         
         for(int i=0; i<str.length(); i++){
             *(buff+i) = str[i];
         }
-        udp::send(buff, str.length());
+        udp::_send(buff, str.length());
         free(buff);
         sleep(PCKT_SND_AFTR);
     }
 }
 
-udp::udp():base(2) {
-    initWinSocket();
-    init();
+void udp::recv_udp(){
+    char udp_buffer[1025];
+    std::string _udp_buffer;
 
+    while (1){
+        if ((valread = recv(udpfd_recv, udp_buffer, 1024, 0))){
+            _udp_buffer = udp_buffer;
+
+            std::cout << _udp_buffer << std::endl;
+            
+            //check if recieved packet is json or not
+            // if yes then pass on to parser.
+            if(json::accept(_udp_buffer)){
+                packet::udp_parse_packet(_udp_buffer);
+            }
+        }
+    }
+}
+
+void udp::create_threads(){
     sender_status = continued;
     std::thread sender_thread([this](){
         udp::sender();
     });
+
+    std::thread recv_thread([this](){
+        udp::recv_udp();
+    });
+    
     sender_thread.detach();
+    recv_thread.detach();
+}
+
+udp::udp():base(2) {
+    init();
 }

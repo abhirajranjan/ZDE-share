@@ -1,4 +1,8 @@
-#include "tcp.hpp"
+#include <string.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef _WIN32
 	#include <Winsock2.h>
@@ -10,13 +14,7 @@
 	#include <arpa/inet.h>
 #endif
 
-#include <string.h>
-#include <iostream>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include "tcp.hpp"
 
 std::string getlocalip(){
     const char* google_dns_server = "8.8.8.8";
@@ -81,13 +79,12 @@ tcp::tcp():udp(){
 	//type of socket created
 	tcpaddr.sin_family = AF_INET;
 	tcpaddr.sin_addr.s_addr = INADDR_ANY;
-	tcpaddr.sin_port = htons( 0 );
+	tcpaddr.sin_port = htons(0);
 	
 	// print the socket addr
     char str[INET6_ADDRSTRLEN];
     inet_ntop(AF_INET, &(tcpaddr.sin_addr), str, INET_ADDRSTRLEN);
     std::cout << str;
-
     
 	
 	//bind the socket to localhost port 8888
@@ -96,7 +93,6 @@ tcp::tcp():udp(){
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
-	printf("Listener on port %d \n", PORT);
 
     char myIP[16];
 
@@ -108,7 +104,7 @@ tcp::tcp():udp(){
     int myPort = ntohs(my_addr.sin_port);
 
     //printf("Local ip address: %s\n", myIP);
-    printf("Local port : %u\n", myPort);
+    printf("\nLocal port : %u\n", myPort);
 
 	tcp_ipport = myPort;
 	tcp_ipaddr = getlocalip();
@@ -118,4 +114,118 @@ tcp::tcp():udp(){
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
+}
+
+void tcp::handle_client(int pos){
+    char buffer[1025];
+    std::string string_buffer;
+    
+    sock_t fd = client_sock[pos];
+
+    //recieve headers
+    if ((valread = recv(fd, buffer, 1024, 0))){
+            string_buffer = buffer;
+    }
+
+    //check if headers is json
+    // if not close connection and free socket 
+    if(!json::accept(string_buffer)){
+        pcloseSocket(fd);
+        client_sock[pos] = 0;
+        return;
+    }
+
+    json j = json::parse(string_buffer);
+
+    // validate json
+    if (!packet::validate_packet(j)){
+        pcloseSocket(fd);
+        client_sock[pos] = 0;
+        return;
+    }
+
+    switch ((int) j["pckt"])
+    {
+    case packet::ping_transfer:
+        parse_ping(fd);
+        break;
+
+    case packet::text_transfer:
+        parse_text(fd);
+        break;
+
+    case packet::file_transfer:
+        parse_file(fd);
+        break;
+
+    // non recognizable tcp packet id
+    default:
+        pcloseSocket(fd);
+        client_sock[pos] = 0;
+        return;
+    }
+}
+
+int tcp::parse_ping(int fd){
+    char c_buffer[1024];
+
+    if ((valread = recv(fd, c_buffer, 1024, 0))){
+        std::cout << "ping: " << c_buffer << std::endl;
+        return 1;
+    }
+    return 0;
+}
+
+int tcp::parse_text(int fd){
+    return 1;
+
+}
+
+int tcp::parse_file(int fd){
+    return 1;
+}
+
+void tcp::tcp_listen(){
+    int valread, addrlen =  sizeof(tcpaddr);
+	sock_t new_socket;
+
+    while(1){
+        if ((new_socket = accept(tcpfd,
+                (struct sockaddr *)&tcpaddr, (socklen_t*)&addrlen)) < 0){
+            perror("accept");
+            exit(EXIT_FAILURE);
+        }
+        
+        //inform user of socket number - used in send and receive commands
+        printf("New connection, ip is : %s , port : %d\n", inet_ntoa(tcpaddr.sin_addr) , ntohs
+            (tcpaddr.sin_port));
+
+        //add new socket to array of sockets
+        for (int i = 0; i < MAX_CLIENT; i++)
+        {
+            //if position is empty
+            if( client_sock[i] == 0)
+            {
+                //create and start a seperate thread for communication 
+                thread_array[i] = std::thread([this, i](){
+                    tcp::handle_client(i);
+                });
+                thread_array[i].detach();
+
+                client_sock[i] = new_socket;
+                printf("Adding to list of sockets as %d\n" , i);
+                break;
+            }
+        }
+    }
+}
+
+void tcp::create_threads(){
+    udp::create_threads();
+    
+    std::thread listen_thread([this](){
+        tcp::tcp_listen();
+    });
+
+    listen_thread.detach();
 }

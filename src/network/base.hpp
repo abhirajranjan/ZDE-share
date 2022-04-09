@@ -26,8 +26,7 @@
 #include <bits/stdc++.h>
 #endif
 
-#include "../json/single_include/nlohmann/json.hpp"
-using json = nlohmann::json;
+#include "packet.hpp"
 
 
 class base
@@ -47,23 +46,16 @@ public:
     void initialize_myself(sock_t tcpfd);
 
     json myself;
-    char buffer[1025];
 
     sock_t client_sock[MAX_CLIENT];
-
-    char udp_buffer[1025];
-    std::string _udp_buffer;
     
-    char client_buffer[MAX_CLIENT][1025];
-    
+    std::thread thread_array[MAX_CLIENT];
 
     char* MULTICAST_IP; // default;
-    int max_sd, i, sd, activity, valread;   
+    int max_sd, sd, activity, valread;   
   
     //set of socket descriptors
 	fd_set readfds;
-
-    int io(sock_t tcpfd, sock_t udpfd, struct sockaddr_in address);
 };
 
 #endif

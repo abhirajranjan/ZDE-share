@@ -40,7 +40,7 @@ base::base(int x){
     MULTICAST_IP = "225.0.0.250";
     
     //initialise all client_socket[] to 0 so not checked
-	for (i = 0; i < MAX_CLIENT; i++)
+	for (int i = 0; i < MAX_CLIENT; i++)
 	{
 		client_sock[i] = 0;
 	}

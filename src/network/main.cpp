@@ -4,10 +4,6 @@ Main::Main():tcp(){
 }
 
 int Main::run(){
-    char str[] = "hello there";
-    if(udp::_send(str, strlen(str)) < 0) {
-        perror("sendto");
-    }
 	initialize_myself(tcpfd);
     Main::io(tcpfd, udpfd_recv, tcpaddr);
     return 1;
@@ -51,6 +47,10 @@ void Main::initialize_myself(sock_t tcpfd) {
 	char myIP[16];
 
 	packet::generate_indentity_packet("abhiraj ranjan", tcp_ipaddr, tcp_ipport, "linux", &myself);
-	std::cout << myself["os"] << std::endl;
+    
+    // defined in udp
+    // must be called every time myself is updated
+    //
+    updateMyselfBuffer();
 }
 

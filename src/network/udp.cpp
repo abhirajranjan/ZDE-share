@@ -42,7 +42,9 @@ void udp::setup_addr(struct sockaddr_in *addr, int port, char *address) {
     addr -> sin_port = htons(port);
 }
 
-int udp::_send(char* str, int length){
+int udp::_send(char* str){
+    // main send function to send packets in udp
+    //
     return sendto(
         udpfd_sender,
         str,
@@ -110,21 +112,31 @@ void udp::init() {
     }
 }
 
+void udp::updateMyselfBuffer(){
+    // update myself :json to udp::buffer :char*
+    //
+    std::string str = myself.dump();
+    
+    // TODO: destroyer of buffer
+    //
+    udp::buffer = (char *) calloc(str.length(), sizeof(char));
+    for(int i=0; i<str.length(); i++){
+            *(udp::buffer+i) = str[i];
+    }
+}
+
 void udp::sender(){
-    while (udp::sender_status != returned){
-        std::string str = myself.dump();
-        char *buff = (char *) calloc(str.length(), sizeof(char));
-        
-        for(int i=0; i<str.length(); i++){
-            *(buff+i) = str[i];
-        }
-        udp::_send(buff, str.length());
-        free(buff);
+    // send buffer :char* to network 
+    //
+    while (udp::sender_status != returned){   
+        udp::_send(udp::buffer);
         sleep(PCKT_SND_AFTR);
     }
 }
 
 void udp::recv_udp(){
+    // recv packets in network
+    //
     char udp_buffer[1025];
     std::string _udp_buffer;
 
@@ -133,12 +145,39 @@ void udp::recv_udp(){
         if ((valread = recv(udpfd_recv, udp_buffer, 1024, 0))){
             _udp_buffer = udp_buffer;
 
-            std::cout << _udp_buffer << std::endl;
-            
             //check if recieved packet is json or not
             // if yes then pass on to parser.
+            //
             if(json::accept(_udp_buffer)){
-                packet::udp_parse_packet(_udp_buffer);
+                packet::resp response = packet::udp_parse_packet(_udp_buffer);
+                if (response.type != packet::empty){
+                    if (
+                        // ip 	port 	result  (1 = same, 0 = diff)
+                        // 0	0	    0
+                        // 0	1	    0
+                        // 1	0	    0
+                        // 1	1	    1
+                        //
+                        response.data["ip"] == myself["ip"] &
+                        response.data["port"] == myself["port"]
+                    ){
+                        // our own packet
+                        //
+                        continue;
+                    }
+                    switch (response.type){
+                        case packet::identity:
+                            break;
+                        case packet::file_transfer:
+                            break;
+                        case packet::ping_transfer:
+                            break;
+                        case packet::text_transfer:
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
         }
     }

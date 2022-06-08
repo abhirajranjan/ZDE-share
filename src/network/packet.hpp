@@ -2,13 +2,19 @@
 #define PACKET_H
 
 #include <iostream>
+#include <typeinfo>
 
 #include "../json/single_include/nlohmann/json.hpp"
 using json = nlohmann::json;
 
 
 namespace packet{
-    enum pckt_t {identity = 0x2b, file_transfer = 0x2c, ping_transfer = 0x2d, text_transfer = 0x2e};
+    enum pckt_t {identity = 42, file_transfer = 43, ping_transfer = 44, text_transfer = 45, empty = 1};
+    struct resp {
+        json data;
+        pckt_t type = empty;
+    };
+
     inline int generate_indentity_packet(std::string nickname, std::string tcpIp, int tcpPort, std::string os, json* out){
         pckt_t pck = identity;
         (*out)["pckt"] = pck;
@@ -17,44 +23,45 @@ namespace packet{
         (*out)["port"] = tcpPort;
         (*out)["os"] = os;
 
-        std::cout << (*out)["os"] << std::endl;
-
         return 1;
     }
 
     inline int validate_packet(json pkt_j){
         static std::array<std::string, 5> arr = {"name", "pckt", "ip", "port", "os"};
         
-        for (int i=0; i < 5; i++){
+        for (int i=0; i < arr.size(); i++){
             if (pkt_j[arr[i]] == NULL){
                 return 0;
             }
         }
 
         if(
-            ((pkt_j["pckt"] != identity) &&
-            (pkt_j["pckt"] != file_transfer) &&
-            (pkt_j["pckt"] != ping_transfer) &&
-            (pkt_j["pckt"] != text_transfer)) ||
-            (((std::string) pkt_j["ip"]).length() != 15)
-        ){
+            ((int) pkt_j["pckt"] != (int) identity) &
+            ((int) pkt_j["pckt"] != (int) file_transfer) &
+            ((int) pkt_j["pckt"] != (int) ping_transfer) &
+            ((int) pkt_j["pckt"] != (int) text_transfer)
+        )
+        {
             return 0;
         }
 
         return 1;
     }
 
-    inline int udp_parse_packet(std::string packet){
+    inline struct resp udp_parse_packet(std::string packet){
         auto pkt_j = json::parse(packet);
+        struct resp response = {};
+
         if (!validate_packet(pkt_j)){
-            return 0;
+            return response;
         }
-
-        if(pkt_j["pckt_type"] == identity){
-            // add them to group
+        
+        if((int) pkt_j["pckt"] == identity){
+            response = {pkt_j, identity};
+            return response;
         }
-
-        return 1;
+        
+        return response; 
     }
 }
 #endif

@@ -13,20 +13,26 @@ class udp: public base{
 
     enum statuses {blocked, returned, continued};
     enum statuses sender_status;
+    // buffer for myself:json to reduce computation every time
+    // when sending packets,
+    //
+    // remember to call updateMyselfBuffer() to regenerate buffer
+    //
+    char *buffer;
 
     void sender();
     void recv_udp();
+    int _send(char *str);
 
     public: 
         udp();
         void create_threads();
+        void updateMyselfBuffer();
 
         sock_t udpfd_recv;
         sock_t udpfd_sender;
         struct sockaddr_in udpaddr_recv;
         struct sockaddr_in udpaddr_sender;
-
-        int _send(char *str, int length);
 };
 
 #endif

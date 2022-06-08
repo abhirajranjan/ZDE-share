@@ -2,15 +2,11 @@
 
 Alora Share lets you connect most of your devices together into a network to share their resources
 
-__Alora Share for mobile will be in development under__ <https://github.com/abhirajranjan/alora-share-mobile>
-
 ## File Structure
 
 * All the source code is under src/.
 
 * src/network/ handle all the network creation.
-
-* src/ui contains UI components. 
 
 ## Requirements
 
@@ -27,11 +23,15 @@ __Alora Share for mobile will be in development under__ <https://github.com/abhi
 ## Building from Source
 
 ```bash
-git clone https://github.com/abhirajranjan/alora-share.git && cd alora-share
-cmake --build ./build --config Debug --target all --
+git clone https://github.com/abhirajranjan/alora-share.git && cd alora-share && mkdir build && cd build
+cmake ../
+cmake --built .
 ```
 
-required binary will be under bin folder
+to run
+```bash
+./aloraShare
+```
 
 ## Inspiration & Reference
 

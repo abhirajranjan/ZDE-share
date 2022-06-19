@@ -4,7 +4,8 @@
 #define MAX_CLIENT 30
 #define PORT 8888
 #define _EOF 0
-#define PCKT_SND_AFTR 1 // in sec
+#define PCKT_SND_AFTR 3 // in sec
+#define UDP_CONNECTION_LIST_REFRESH 12
 
 #if defined(_WIN32) || defined(WIN32)
 #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
@@ -28,6 +29,11 @@
 
 #include "packet.hpp"
 
+
+struct devices {
+        std::time_t time;
+        json info;
+};
 
 class base
 {

@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+
+#include <ctime>
  
 #include "udp.hpp"
 
@@ -167,6 +169,7 @@ void udp::recv_udp(){
                     }
                     switch (response.type){
                         case packet::identity:
+                            udp::update_devices_list_on_network(response.data);
                             break;
                         case packet::file_transfer:
                             break;
@@ -199,4 +202,55 @@ void udp::create_threads(){
 
 udp::udp():base(2) {
     init();
+}
+
+// connection functions
+
+std::time_t time(){
+    std::time_t ctime = std::time(nullptr);
+    return ctime;
+}
+
+bool comp_devices(json dev1, json dev2){
+    std::string dev1_ip = (std::string) dev1["ip"];
+    std::string dev2_ip = (std::string) dev2["ip"];
+
+    int dev1_port = (int) dev1["port"];
+    int dev2_port = (int) dev2["port"];
+
+    return ((dev1_ip == dev2_ip) & (dev1_port == dev2_port)) ? true : false;
+}
+
+void udp::update_devices_list_on_network(json connection_packet){
+        
+        for(auto device : devs){
+            if(comp_devices(connection_packet, device.info)){
+                device.time = time();
+                return;
+            }
+        }
+
+        std::cout << "adding new connection"<< std::endl;
+        devices dev = {time(), connection_packet};
+        devs.push_back(dev);
+        return;
+}
+
+void udp::remove_dead_devices(std::vector<devices> *devs){
+    std::time_t ctime = time();
+    
+
+    for(std::vector<devices>::iterator iter = devs->begin(); iter != devs->end();){
+        if(ctime - iter->time > UDP_CONNECTION_LIST_REFRESH){
+            std::cout << ctime - iter->time << " " << iter->info["ip"] << std::endl;
+            iter  = devs->erase(iter);
+        }
+        else
+            ++iter;
+    }
+}
+
+std::vector<devices> udp::get_devices(){
+    udp::remove_dead_devices(&devs);
+    return devs;
 }

@@ -1,4 +1,6 @@
 #include "main.hpp"
+#include <ctime>
+#include <stdlib.h>
 
 Main::Main():tcp(){
 }
@@ -12,7 +14,18 @@ int Main::run(){
 int main(){
     Main obj;
     obj.run();
-	while (1);
+    std::time_t time = std::time(nullptr);
+	while (1){
+        std::time_t ctime = std::time(nullptr);
+        if((ctime-time > 3)){
+            time = ctime;
+            //system("clear");
+            for(auto dev: obj.get_devices()){
+                std::cout << dev.info["nickname"] << " " << dev.info["ip"] << ":" << dev.info["port"] << std::endl;
+            }
+        }
+        
+    }
 }
 
 int Main::io(sock_t tcpfd, sock_t udpfd, struct sockaddr_in address) {

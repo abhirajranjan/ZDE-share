@@ -57,7 +57,7 @@ public:
     
     std::thread thread_array[MAX_CLIENT];
 
-    char* MULTICAST_IP; // default;
+    std::string MULTICAST_IP; // default;
     int max_sd, sd, activity, valread;   
   
     //set of socket descriptors

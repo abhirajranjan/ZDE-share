@@ -21,7 +21,7 @@ int main(){
             time = ctime;
             //system("clear");
             for(auto dev: obj.get_devices()){
-                std::cout << dev.info["nickname"] << " " << dev.info["ip"] << ":" << dev.info["port"] << std::endl;
+                std::cout << dev.info["name"] << " " << dev.info["ip"] << ":" << dev.info["port"] << std::endl;
             }
         }
         

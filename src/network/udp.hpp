@@ -7,7 +7,7 @@
 class udp: public base{
     void init();
     void setup_addr(struct sockaddr_in *addr, int port);
-    void setup_addr(struct sockaddr_in *addr, int port, char *address);
+    void setup_addr(struct sockaddr_in *addr, int port, std::string *address);
 
     std::thread sender_thread;
     std::vector<devices> devs;

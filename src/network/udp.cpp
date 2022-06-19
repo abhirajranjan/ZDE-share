@@ -36,11 +36,11 @@ void udp::setup_addr(struct sockaddr_in *addr, int port) {
     addr -> sin_port = htons(port);
 }
 
-void udp::setup_addr(struct sockaddr_in *addr, int port, char *address) {
+void udp::setup_addr(struct sockaddr_in *addr, int port, std::string *address) {
     // set up destination address
     memset(addr, 0, sizeof(*addr));
     addr -> sin_family = AF_INET;
-    addr -> sin_addr.s_addr = inet_addr(address); // differs from sender
+    addr -> sin_addr.s_addr = inet_addr(address->c_str()); // differs from sender
     addr -> sin_port = htons(port);
 }
 
@@ -90,7 +90,7 @@ void udp::init() {
     }
 
     setup_addr(&udpaddr_recv, PORT);
-    setup_addr(&udpaddr_sender, PORT, MULTICAST_IP);
+    setup_addr(&udpaddr_sender, PORT, &MULTICAST_IP);
 
     // bind udp_recv to multicast addr address
     //
@@ -102,7 +102,7 @@ void udp::init() {
     // use setsockopt() to request that the kernel join a multicast group
     //
     struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = inet_addr(MULTICAST_IP);
+    mreq.imr_multiaddr.s_addr = inet_addr(MULTICAST_IP.c_str());
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     if (
         setsockopt(

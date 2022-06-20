@@ -44,7 +44,7 @@ void udp::setup_addr(struct sockaddr_in *addr, int port, std::string *address) {
     addr -> sin_port = htons(port);
 }
 
-int udp::_send(char* str){
+int udp::_send(const char* str){
     // main send function to send packets in udp
     //
     return sendto(
@@ -114,24 +114,11 @@ void udp::init() {
     }
 }
 
-void udp::updateMyselfBuffer(){
-    // update myself :json to udp::buffer :char*
-    //
-    std::string str = myself.dump();
-    
-    // TODO: destroyer of buffer
-    //
-    udp::buffer = (char *) calloc(str.length(), sizeof(char));
-    for(int i=0; i<str.length(); i++){
-            *(udp::buffer+i) = str[i];
-    }
-}
-
 void udp::sender(){
     // send buffer :char* to network 
     //
-    while (udp::sender_status != returned){   
-        udp::_send(udp::buffer);
+    while (udp::sender_status != returned){
+        udp::_send(myself.dump().c_str());
         sleep(PCKT_SND_AFTR);
     }
 }
@@ -230,7 +217,6 @@ void udp::update_devices_list_on_network(json connection_packet){
             }
         }
 
-        std::cout << "adding new connection"<< std::endl;
         devices dev = {time(), connection_packet};
         devs.push_back(dev);
         return;
@@ -242,7 +228,6 @@ void udp::remove_dead_devices(std::vector<devices> *devs){
 
     for(std::vector<devices>::iterator iter = devs->begin(); iter != devs->end();){
         if(ctime - iter->time > UDP_CONNECTION_LIST_REFRESH){
-            std::cout << ctime - iter->time << " " << iter->info["ip"] << std::endl;
             iter  = devs->erase(iter);
         }
         else

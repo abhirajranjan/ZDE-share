@@ -14,23 +14,16 @@ class udp: public base{
 
     enum statuses {blocked, returned, continued};
     enum statuses sender_status;
-    // buffer for myself:json to reduce computation every time
-    // when sending packets,
-    //
-    // remember to call updateMyselfBuffer() to regenerate buffer
-    //
-    char *buffer;
-
+    
     void sender();
     void recv_udp();
-    int _send(char *str);
+    int _send(const char *str);
     void update_devices_list_on_network(json connection_packet);
     void remove_dead_devices(std::vector<devices> *devs);
 
     public: 
         udp();
         void create_threads();
-        void updateMyselfBuffer();
         std::vector<devices> get_devices();
 
         sock_t udpfd_recv;

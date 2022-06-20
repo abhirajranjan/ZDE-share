@@ -12,8 +12,8 @@ find_package(Threads REQUIRED)
 add_executable (aloraShare
 "src/network/base.cpp" 
 "src/network/base.hpp"
-"src/network/main.cpp" 
-"src/network/main.hpp" 
+"src/network/aloraShare.cpp" 
+"src/network/aloraShare.hpp" 
 "src/network/tcp.cpp" 
 "src/network/tcp.hpp" 
 "src/network/udp.hpp" 

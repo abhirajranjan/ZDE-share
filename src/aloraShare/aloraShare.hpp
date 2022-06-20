@@ -3,13 +3,13 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-class Main: public tcp{
+class aloraShare: public tcp{
     int io(sock_t tcpfd, sock_t udpfd, struct sockaddr_in address);
     
     public:
-        Main();
+        aloraShare();
         int run();
-        void initialize_myself(sock_t tcpfd);
+        void update_identity(std::string name);
 
 };
 

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <typeinfo>
 
-#include "../json/single_include/nlohmann/json.hpp"
+#include "json/single_include/nlohmann/json.hpp"
 using json = nlohmann::json;
 
 

@@ -1,15 +1,4 @@
-#ifdef _WIN32
-    #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
-    #include <Ws2tcpip.h> // needed for ip_mreq definition for multicast
-    #include <Windows.h>
-#else
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <time.h>
-    #include <unistd.h>
-#endif
+#include "udp.hpp"
 
 #include <string.h>
 #include <chrono>
@@ -21,7 +10,6 @@
 
 #include <ctime>
  
-#include "udp.hpp"
 
 #define MSGBUFSIZE 256
 #define TRUE 1

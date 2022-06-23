@@ -1,20 +1,11 @@
+#include "tcp.hpp"
+
 #include <string.h>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-	#include <Winsock2.h>
-	#include <WS2tcpip.h>
-#else
-	#include <unistd.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-#endif
-
-#include "tcp.hpp"
 
 std::string getlocalip(){
     const char* google_dns_server = "8.8.8.8";

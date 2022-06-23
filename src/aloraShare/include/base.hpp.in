@@ -7,24 +7,31 @@
 #define PCKT_SND_AFTR 3 // in sec
 #define UDP_CONNECTION_LIST_REFRESH 12
 
-#if defined(_WIN32) || defined(WIN32)
-#include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
-#include <Windows.h>
-#include <Ws2tcpip.h> // needed for ip_mreq definition for multicast
-#include <io.h>
 
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "Mswsock.lib")
-#pragma comment(lib, "AdvApi32.lib")
+#cmakedefine WIN32
+#cmakedefine UNIX
 
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <time.h>
-#include <unistd.h>
-#include <bits/stdc++.h>
+#ifdef WIN32
+    #include <Winsock2.h> // before Windows.h, else Winsock 1 conflict
+    #include <Windows.h>
+    #include <Ws2tcpip.h> // needed for ip_mreq definition for multicast
+    #include <io.h>
+
+    #pragma comment(lib, "Ws2_32.lib")
+    #pragma comment(lib, "Mswsock.lib")
+    #pragma comment(lib, "AdvApi32.lib")
+#endif
+
+
+#ifdef UNIX
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+
+    #include <sys/types.h>
+	#include <bits/stdc++.h>
+    #include <time.h>
 #endif
 
 #include "packet.hpp"

@@ -8,10 +8,11 @@ else()
     message(STATUS "Cannot build required modules does not match")
 endif()
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/aloraShare/include/base.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/src/aloraShare/include/base.hpp)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/aloraShare/include/platform.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/src/aloraShare/include/platform.hpp)
 
 project ("aloraShare")
 
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -26,6 +27,7 @@ add_executable (aloraShare
 "src/aloraShare/aloraShare.cpp"  
 "src/aloraShare/tcp.cpp" 
 "src/aloraShare/udp.cpp"
+"src/daemon.cpp"
 )
 
 # TODO: Add tests and install targets if needed.

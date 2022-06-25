@@ -43,5 +43,5 @@ void aloraShare::update_identity(std::string name) {
 	char myIP[16];
 
 
-	packet::generate_indentity_packet("name", tcp_ipaddr, tcp_ipport, "linux", &myself);
+	packet::generate_indentity_packet(name, tcp_ipaddr, tcp_ipport, "linux", &myself);
 }

@@ -4,4 +4,4 @@ build/*
 .cache/*
 
 # cmake will compile it according to platform
-src/aloraShare/include/base.hpp
+src/aloraShare/include/platform.hpp

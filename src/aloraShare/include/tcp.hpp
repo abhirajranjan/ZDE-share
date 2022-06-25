@@ -5,7 +5,8 @@
 
 
 
-class tcp: public udp{
+class tcp: public udp
+{
     public:
         tcp();
         void tcp_listen();

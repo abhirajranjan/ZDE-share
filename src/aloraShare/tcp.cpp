@@ -1,6 +1,5 @@
 #include "tcp.hpp"
 
-#include <string.h>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,42 +47,18 @@ std::string getlocalip(){
     }
 }
 
-tcp::tcp():udp(){
-    int opt = 1;
-
-	tcpfd = socket(AF_INET , SOCK_STREAM , 0);
-    if((!validSocket(tcpfd)))
-	{
-		perror("socket failed");
-		exit(EXIT_FAILURE);
-	}
+tcp::tcp():udp()
+{
+    tcpfd = networking::generate_socket(AF_INET, SOCK_STREAM, 0);
 	
-	//set master socket to allow multiple connections ,
-	//this is just a good habit, it will work without this
-	if( setsockopt(tcpfd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt,
-		sizeof(opt)) < 0 )
-	{
-		perror("setsockopt");
-		exit(EXIT_FAILURE);
-	}
-	
-	//type of socket created
-	tcpaddr.sin_family = AF_INET;
-	tcpaddr.sin_addr.s_addr = INADDR_ANY;
-	tcpaddr.sin_port = htons(0);
-	
+    networking::setup_addr(AF_INET, 0, &tcpaddr);
+    
 	// print the socket addr
     char str[INET6_ADDRSTRLEN];
     inet_ntop(AF_INET, &(tcpaddr.sin_addr), str, INET_ADDRSTRLEN);
-    std::cout << str;
+    std::cout << str << std::endl;
     
-	
-	//bind the socket to localhost port 8888
-	if (bind(tcpfd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr)) < 0)
-	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
-	}
+	networking::bind_socket(tcpfd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr));
 
     char myIP[16];
 
@@ -107,21 +82,24 @@ tcp::tcp():udp(){
 	}
 }
 
-void tcp::handle_client(int pos){
+void tcp::handle_client(int pos)
+{
     char buffer[1025];
     std::string string_buffer;
     
     sock_t fd = client_sock[pos];
 
     //recieve headers
-    if ((valread = recv(fd, buffer, 1024, 0))){
+    if ((valread = recv(fd, buffer, 1024, 0)))
+    {
             string_buffer = buffer;
     }
 
     //check if headers is json
     // if not close connection and free socket 
-    if(!json::accept(string_buffer)){
-        pcloseSocket(fd);
+    if(!json::accept(string_buffer))
+    {
+        networking::pcloseSocket(fd);
         client_sock[pos] = 0;
         return;
     }
@@ -129,8 +107,9 @@ void tcp::handle_client(int pos){
     json j = json::parse(string_buffer);
 
     // validate json
-    if (!packet::validate_packet(j)){
-        pcloseSocket(fd);
+    if (!packet::validate_packet(j))
+    {
+        networking::pcloseSocket(fd);
         client_sock[pos] = 0;
         return;
     }
@@ -151,45 +130,50 @@ void tcp::handle_client(int pos){
 
     // non recognizable tcp packet id
     default:
-        pcloseSocket(fd);
+        networking::pcloseSocket(fd);
         client_sock[pos] = 0;
         return;
     }
 }
 
-int tcp::parse_ping(int fd){
+int tcp::parse_ping(int fd)
+{
     char c_buffer[1024];
 
-    if ((valread = recv(fd, c_buffer, 1024, 0))){
+    if ((valread = recv(fd, c_buffer, 1024, 0)))
+    {
         std::cout << "ping: " << c_buffer << std::endl;
         return 1;
     }
     return 0;
 }
 
-int tcp::parse_text(int fd){
+int tcp::parse_text(int fd)
+{
     return 1;
 
 }
 
-int tcp::parse_file(int fd){
+int tcp::parse_file(int fd)
+{
     return 1;
 }
 
-void tcp::tcp_listen(){
+void tcp::tcp_listen()
+{
     int valread, addrlen =  sizeof(tcpaddr);
 	sock_t new_socket;
 
-    while(1){
-        if ((new_socket = accept(tcpfd,
-                (struct sockaddr *)&tcpaddr, (socklen_t*)&addrlen)) < 0){
+    while(1)
+    {
+        if ((new_socket = accept(tcpfd,(struct sockaddr *)&tcpaddr, (socklen_t*)&addrlen)) < 0)
+        {
             perror("accept");
             exit(EXIT_FAILURE);
         }
         
         //inform user of socket number - used in send and receive commands
-        printf("New connection, ip is : %s , port : %d\n", inet_ntoa(tcpaddr.sin_addr) , ntohs
-            (tcpaddr.sin_port));
+        printf("New connection, ip is : %s , port : %d\n", inet_ntoa(tcpaddr.sin_addr) , ntohs(tcpaddr.sin_port));
 
         //add new socket to array of sockets
         for (int i = 0; i < MAX_CLIENT; i++)
@@ -211,7 +195,8 @@ void tcp::tcp_listen(){
     }
 }
 
-void tcp::create_threads(){
+void tcp::create_threads()
+{
     udp::create_threads();
     
     std::thread listen_thread([this](){

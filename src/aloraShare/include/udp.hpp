@@ -4,15 +4,14 @@
 #define UDP_H
 
 
-class udp: public base{
+class udp: public base
+{
     void init();
-    void setup_addr(struct sockaddr_in *addr, int port);
-    void setup_addr(struct sockaddr_in *addr, int port, std::string *address);
 
     std::thread sender_thread;
     std::vector<devices> devs;
 
-    enum statuses {blocked, returned, continued};
+    enum statuses { blocked, returned, continued };
     enum statuses sender_status;
     
     void sender();
